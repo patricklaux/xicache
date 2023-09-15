@@ -1,0 +1,41 @@
+xcache:
+  t1:
+    name: global
+    charset: UTF-8
+    application: shop
+    cache-type: both
+    first:
+      cache-store: caffeineCacheStore
+      store-type:
+      expire-after-access: 3600
+      expire-after-write: 3600
+      maximum-size: 4000000
+      key-convertor:
+      value-serializer: jacksonSerializerProvider
+      value-compressor: gzipCompressorProvider
+    second:
+      cache-store: lettuceCacheStore
+      store-type: redis-string
+      enable-key-prefix: true
+      expire-after-write: 3600
+      key-serializer: stringSerializerProvider
+      value-serializer: jacksonSerializerProvider
+      value-compressor: gzipCompressorProvider
+    extension:
+      cache-lock: ''
+      cache-lock-size: 512
+      cache-stat: ''
+      cache-sync: ''
+      cache-loader: ''
+      cache-writer: ''
+      cache-monitors: ''
+      contains-predicate: ''
+    metadata:
+  caches:
+    - name: user
+      charset: UTF-8
+    - name: order
+      charset: UTF-8
+  redis:
+    - id:
+
