@@ -118,7 +118,7 @@ public class MultiLevelCacheManager implements CacheManager {
         return null;
     }
 
-    private <K, V> List<CacheMonitor<K, V>> getCacheMonitors(String name, Class<K> keyType, Class<V> valueType, CacheProps cacheProps) {
+    private <K, V> List<CacheMonitor<V>> getCacheMonitors(String name, Class<K> keyType, Class<V> valueType, CacheProps cacheProps) {
         // TODO 添加 CacheMonitors
 
         return new ArrayList<>();

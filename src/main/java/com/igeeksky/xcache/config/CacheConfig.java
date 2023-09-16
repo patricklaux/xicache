@@ -28,7 +28,7 @@ public class CacheConfig<K, V> implements Cloneable {
     private Serializer<V> keySerializer;
     private Serializer<V> valueSerializer;
     private ContainsPredicate<K> containsPredicate;
-    private List<CacheMonitor<K, V>> monitors;
+    private List<CacheMonitor<V>> monitors;
 
     public CacheConfig() {
     }
@@ -141,11 +141,11 @@ public class CacheConfig<K, V> implements Cloneable {
         this.containsPredicate = containsPredicate;
     }
 
-    public List<CacheMonitor<K, V>> getMonitors() {
+    public List<CacheMonitor<V>> getMonitors() {
         return monitors;
     }
 
-    public void setMonitors(List<CacheMonitor<K, V>> monitors) {
+    public void setMonitors(List<CacheMonitor<V>> monitors) {
         this.monitors = monitors;
     }
 

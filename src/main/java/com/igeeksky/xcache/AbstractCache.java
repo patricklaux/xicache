@@ -1,18 +1,17 @@
 package com.igeeksky.xcache;
 
-import com.igeeksky.xcache.common.CacheKeyNullException;
-import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.KeyValue;
+import com.igeeksky.xcache.common.*;
 import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.extension.lock.CacheLock;
+import com.igeeksky.xcache.extension.Compressor;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
+import com.igeeksky.xcache.extension.convertor.KeyConvertor;
+import com.igeeksky.xcache.extension.lock.CacheLock;
+import com.igeeksky.xcache.extension.serializer.Serializer;
 import com.igeeksky.xtool.core.collection.Maps;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -24,6 +23,27 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     private final String name;
     private final Class<K> keyType;
     private final Class<V> valueType;
+
+    // TODO 设置属性
+    private KeyConvertor keyConvertor;
+
+    private Serializer<V> localValueSerializer;
+
+    private Compressor localValueCompressor;
+
+    private Serializer<V> remoteValueSerializer;
+
+    private Compressor remoteValueCompressor;
+
+    private boolean serializeLocalValue;
+
+    private boolean compressLocalValue;
+
+    private boolean compressRemoteValue;
+
+    private final boolean useKeyPrefix = true;
+
+    private boolean allowNullValue;
 
     private final Object lock = new Object();
     private volatile SyncCache<K, V> syncCache;
@@ -60,10 +80,10 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         if (null == key) {
             return Mono.error(new CacheKeyNullException());
         }
-        return this.doGet(key);
+        return this.doGet(toStoreKey(key));
     }
 
-    protected abstract Mono<CacheValue<V>> doGet(K key);
+    protected abstract Mono<CacheValue<V>> doGet(String key);
 
     @Override
     public Mono<CacheValue<V>> get(K key, CacheLoader<K, V> cacheLoader) {
@@ -76,13 +96,13 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return Mono.just(key)
                     .doOnNext(k -> keyLock.lock())
                     .flatMap(this::get)
-                    .switchIfEmpty(this.doGet(key, cacheLoader))
+                    .switchIfEmpty(this.doGet(key, toStoreKey(key), cacheLoader))
                     .doFinally(s -> keyLock.unlock());
         }
         return Mono.empty();
     }
 
-    protected abstract Mono<CacheValue<V>> doGet(K key, CacheLoader<K, V> cacheLoader);
+    protected abstract Mono<CacheValue<V>> doGet(K key, String storeKey, CacheLoader<K, V> cacheLoader);
 
     @Override
     public Flux<KeyValue<K, CacheValue<V>>> getAll(Set<? extends K> keys) {
@@ -92,32 +112,44 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         if (keys.isEmpty()) {
             return Flux.empty();
         }
-        return Mono.just(keys)
-                .doOnNext(ks -> ks.forEach(key -> {
-                    if (null == key) {
-                        throw new CacheKeyNullException();
-                    }
-                }))
-                .flatMapMany(ks -> this.doGetAll(ks).filter(KeyValue::hasValue));
+        Mono<Map<String, K>> mono = Mono.just(keys)
+                .map(ks -> {
+                    Map<String, K> map = new LinkedHashMap<>(ks.size());
+                    ks.forEach(k -> {
+                        if (k == null) {
+                            throw new CacheKeyNullException();
+                        }
+                        map.put(toStoreKey(k), k);
+                    });
+                    return map;
+                });
+        return mono.flatMapMany(map ->
+                this.doGetAll(new LinkedHashSet<>(map.keySet()))
+                        .filter(KeyValue::hasValue)
+                        .map(kv -> new KeyValue<>(map.get(kv.getKey()), kv.getValue()))
+        );
     }
 
-    protected abstract Flux<KeyValue<K, CacheValue<V>>> doGetAll(Set<? extends K> keys);
+    protected abstract Flux<KeyValue<String, CacheValue<V>>> doGetAll(Set<String> keys);
 
     @Override
     public Mono<Void> putAll(Mono<Map<? extends K, ? extends V>> keyValues) {
         return keyValues
                 .filter(Maps::isNotEmpty)
-                .doOnNext(kvs -> {
+                .map(kvs -> {
+                    Map<String, V> map = new LinkedHashMap<>(kvs.size());
                     kvs.forEach((k, v) -> {
-                        if (null == k) {
+                        if (k == null) {
                             throw new CacheKeyNullException();
                         }
+                        map.put(toStoreKey(k), v);
                     });
+                    return map;
                 })
                 .flatMap(this::doPutAll);
     }
 
-    protected abstract Mono<Void> doPutAll(Map<? extends K, ? extends V> keyValues);
+    protected abstract Mono<Void> doPutAll(Map<String, ? extends V> keyValues);
 
     @Override
     public Mono<Void> put(K key, Mono<V> monoValue) {
@@ -125,20 +157,20 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return Mono.error(new CacheKeyNullException());
         }
         return monoValue
-                .flatMap(value -> this.doPut(key, value));
+                .flatMap(value -> this.doPut(toStoreKey(key), value));
     }
 
-    protected abstract Mono<Void> doPut(K key, V value);
+    protected abstract Mono<Void> doPut(String key, V value);
 
     @Override
     public Mono<Void> remove(K key) {
         if (null == key) {
             return Mono.error(new CacheKeyNullException());
         }
-        return this.doRemove(key);
+        return this.doRemove(toStoreKey(key));
     }
 
-    protected abstract Mono<Void> doRemove(K key);
+    protected abstract Mono<Void> doRemove(String key);
 
     @Override
     public Mono<Void> removeAll(Set<? extends K> keys) {
@@ -149,15 +181,20 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return Mono.empty();
         }
         return Mono.just(keys)
-                .doOnNext(ks -> ks.forEach(key -> {
-                    if (null == key) {
-                        throw new CacheKeyNullException();
-                    }
-                }))
+                .map(ks -> {
+                    Set<String> set = new LinkedHashSet<>(ks.size());
+                    ks.forEach(k -> {
+                        if (k == null) {
+                            throw new CacheKeyNullException();
+                        }
+                        set.add(toStoreKey(k));
+                    });
+                    return set;
+                })
                 .flatMap(this::doRemoveAll);
     }
 
-    protected abstract Mono<Void> doRemoveAll(Set<? extends K> keys);
+    protected abstract Mono<Void> doRemoveAll(Set<String> keys);
 
     @Override
     public SyncCache<K, V> sync() {
@@ -181,5 +218,87 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             }
         }
         return asyncCache;
+    }
+
+
+    protected String toStoreKey(K key) {
+        return keyConvertor.apply(key);
+    }
+
+    protected Object toLocalStoreValue(V value) {
+        if (null == value) {
+            if (allowNullValue) {
+                return null;
+            }
+            throw new CacheValueNullException();
+        }
+        if (serializeLocalValue) {
+            if (compressLocalValue) {
+                return localValueCompressor.compress(localValueSerializer.serialize(value));
+            }
+            return localValueSerializer.serialize(value);
+        }
+        return value;
+    }
+
+    protected byte[] toRemoteStoreValue(V value) {
+        if (null == value) {
+            if (allowNullValue) {
+                return NullValue.INSTANCE_BYTES;
+            }
+            throw new CacheValueNullException();
+        }
+        byte[] remoteValue = remoteValueSerializer.serialize(value);
+        if (compressRemoteValue) {
+            return remoteValueCompressor.compress(remoteValue);
+        }
+        return remoteValue;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Mono<CacheValue<V>> fromLocalStoreValue(CacheValue<Object> cacheValue) {
+        if (cacheValue == null) {
+            return Mono.empty();
+        }
+        // 本地缓存需要判断是否允许空值
+        if (!cacheValue.hasValue()) {
+            if (allowNullValue) {
+                return Mono.justOrEmpty((CacheValue<V>) cacheValue);
+            }
+            return Mono.empty();
+        }
+
+        Object storeValue = cacheValue.getValue();
+        if (serializeLocalValue) {
+            if (compressLocalValue) {
+                V value = localValueSerializer.deserialize(localValueCompressor.decompress((byte[]) storeValue));
+                return Mono.just(CacheValues.newCacheValue(value));
+            }
+            return Mono.just(CacheValues.newCacheValue(localValueSerializer.deserialize((byte[]) storeValue)));
+        }
+        return Mono.just((CacheValue<V>) cacheValue);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Mono<CacheValue<V>> fromRemoteStoreValue(CacheValue<byte[]> cacheValue) {
+        if (cacheValue == null) {
+            return Mono.empty();
+        }
+        if (!cacheValue.hasValue()) {
+            return Mono.justOrEmpty((CacheValue<V>) cacheValue);
+        }
+        byte[] storeValue = cacheValue.getValue();
+        // 远程缓存需要判断是否是空值(NullValue)
+        if (Arrays.equals(NullValue.INSTANCE_BYTES, storeValue)) {
+            if (allowNullValue) {
+                return Mono.just(CacheValues.emptyCacheValue());
+            }
+            return Mono.empty();
+        }
+        if (compressRemoteValue) {
+            V value = remoteValueSerializer.deserialize(remoteValueCompressor.decompress(storeValue));
+            return Mono.just(CacheValues.newCacheValue(value));
+        }
+        return Mono.just(CacheValues.newCacheValue(remoteValueSerializer.deserialize(storeValue)));
     }
 }

@@ -8,7 +8,7 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class CacheSyncMessage<K> implements Serializable {
+public class CacheSyncMessage implements Serializable {
 
     private static final long serialVersionUID = -9034710794861743946L;
 
@@ -25,7 +25,7 @@ public class CacheSyncMessage<K> implements Serializable {
      */
     private int type;
 
-    private Set<K> keys;
+    private Set<String> keys;
 
     public CacheSyncMessage() {
     }
@@ -46,21 +46,21 @@ public class CacheSyncMessage<K> implements Serializable {
         return type;
     }
 
-    public CacheSyncMessage<K> setType(int type) {
+    public CacheSyncMessage setType(int type) {
         this.type = type;
         return this;
     }
 
-    public Set<K> getKeys() {
+    public Set<String> getKeys() {
         return keys;
     }
 
-    public CacheSyncMessage<K> setKeys(Set<K> keys) {
+    public CacheSyncMessage setKeys(Set<String> keys) {
         this.keys = keys;
         return this;
     }
 
-    public CacheSyncMessage<K> addKey(K key) {
+    public CacheSyncMessage addKey(String key) {
         if (this.keys == null) {
             this.keys = new LinkedHashSet<>();
         }
