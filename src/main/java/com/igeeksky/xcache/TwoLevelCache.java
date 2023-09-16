@@ -6,6 +6,8 @@ import com.igeeksky.xcache.extension.Compressor;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProxy;
 import com.igeeksky.xcache.extension.serializer.Serializer;
+import com.igeeksky.xcache.store.LocalCacheStore;
+import com.igeeksky.xcache.store.RemoteCacheStore;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,8 +26,9 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     private final ReactiveCache<K, V> secondCache;
     private final CacheMonitorProxy<K, V> cacheMonitor = new CacheMonitorProxy<>();
 
-    private ReactiveCache<String, Object> local;
-    private ReactiveCache<String, byte[]> remote;
+    private LocalCacheStore local;
+
+    private RemoteCacheStore remote;
 
     private KeyConvertor keyConvertor;
 
@@ -56,7 +59,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected Mono<CacheValue<V>> doGet(K key) {
-        Mono.just(key)
+        return Mono.just(key)
                 .map(this::toLocalStoreKey)
                 .flatMap(k -> local.get(k)
                         .flatMap(this::fromLocalStoreValue)
@@ -70,17 +73,6 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
                                     local.put(k, Mono.justOrEmpty(localStoreValue));
                                 })
                         ));
-
-        // CacheValue 是不需要的，本地缓存通过 NullValue来代替
-
-        return firstCache.get(key)
-                .doOnSuccess(value -> cacheMonitor.afterGet(key, value, CacheLevel.L1))
-                .switchIfEmpty(
-                        secondCache.get(key)
-                                .doOnSuccess(value -> cacheMonitor.afterGet(key, value, CacheLevel.L2))
-                                .filter(Objects::nonNull)
-                                .doOnNext(cacheValue -> firstCache.put(key, Mono.justOrEmpty(cacheValue.getValue())))
-                );
     }
 
     protected String toRemoteStoreKey(String localKey) {

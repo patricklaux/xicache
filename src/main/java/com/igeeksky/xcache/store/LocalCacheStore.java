@@ -26,7 +26,6 @@ public interface LocalCacheStore extends CacheStore<String, Object> {
 
     Mono<Void> doPutAll(Mono<Map<Object, CacheValue<Object>>> keyValues);
 
-
     @Override
     default Mono<Void> put(String key, Mono<Object> value) {
         return doPut(key, value.map(CacheValue::new));
