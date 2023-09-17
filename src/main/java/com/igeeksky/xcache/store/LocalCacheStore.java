@@ -1,6 +1,5 @@
 package com.igeeksky.xcache.store;
 
-import com.igeeksky.xcache.CacheStore;
 import com.igeeksky.xcache.common.CacheValue;
 import reactor.core.publisher.Mono;
 
@@ -17,14 +16,14 @@ public interface LocalCacheStore extends CacheStore<String, Object> {
     default Mono<Void> putAll(Mono<Map<? extends String, ?>> keyValues) {
         return this.doPutAll(
                 keyValues.map(kvs -> {
-                    Map<Object, CacheValue<Object>> newMap = new LinkedHashMap<>();
+                    Map<String, CacheValue<Object>> newMap = new LinkedHashMap<>();
                     kvs.forEach((k, v) -> newMap.put(k, new CacheValue<>(v)));
                     return newMap;
                 })
         );
     }
 
-    Mono<Void> doPutAll(Mono<Map<Object, CacheValue<Object>>> keyValues);
+    Mono<Void> doPutAll(Mono<Map<String, CacheValue<Object>>> keyValues);
 
     @Override
     default Mono<Void> put(String key, Mono<Object> value) {

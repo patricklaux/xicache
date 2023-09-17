@@ -41,6 +41,8 @@ public interface ReactiveCache<K, V> {
      */
     Flux<KeyValue<K, CacheValue<V>>> getAll(Set<? extends K> keys);
 
+    Mono<Void> put(K key, Mono<V> value);
+
     /**
      * 将多个键值对存入到缓存中
      *
@@ -48,8 +50,6 @@ public interface ReactiveCache<K, V> {
      * @return 空
      */
     Mono<Void> putAll(Mono<Map<? extends K, ? extends V>> keyValues);
-
-    Mono<Void> put(K key, Mono<V> value);
 
     Mono<Void> remove(K key);
 

@@ -12,7 +12,7 @@ import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProvider;
 import com.igeeksky.xcache.extension.sync.CacheMessagePublisher;
 import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
-import com.igeeksky.xcache.store.AbstractCacheStore;
+import com.igeeksky.xcache.store.CacheStore;
 import com.igeeksky.xcache.store.CacheStoreProvider;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
@@ -101,7 +101,7 @@ public class MultiLevelCacheManager implements CacheManager {
             // 构建配置
 
             // 获取缓存
-            AbstractCacheStore<K, V> cacheStore = cacheStoreProvider.get(cacheConfig);
+            CacheStore<K, V> cacheStore = cacheStoreProvider.get(cacheConfig);
 
         }
 

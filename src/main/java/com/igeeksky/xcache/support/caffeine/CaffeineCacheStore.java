@@ -3,9 +3,10 @@ package com.igeeksky.xcache.support.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.StoreType;
+import com.igeeksky.xcache.common.KeyValue;
 import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.store.AbstractLocalCacheStore;
+import com.igeeksky.xcache.store.LocalCacheStore;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -15,51 +16,55 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-22
  */
-public class CaffeineCacheStore<K, V> extends AbstractLocalCacheStore<K, V> {
+public class CaffeineCacheStore<K, V> implements LocalCacheStore {
 
-    private final Cache<Object, CacheValue<Object>> cache;
+    private static final String STORE_NAME = "Caffeine";
 
-    public CaffeineCacheStore(CacheConfig<K, V> config, Cache<Object, CacheValue<Object>> cache) {
-        super(config);
+    private final Cache<String, CacheValue<Object>> cache;
+
+    public CaffeineCacheStore(CacheConfig<K, V> config, Cache<String, CacheValue<Object>> cache) {
         this.cache = cache;
     }
 
     @Override
-    public StoreType getStoreType() {
-        return StoreType.LOCAL;
-    }
-
-    @Override
-    protected Mono<CacheValue<Object>> doStoreGet(Object key) {
+    public Mono<CacheValue<Object>> get(String key) {
         return Mono.justOrEmpty(cache.getIfPresent(key));
-        // return cache.getIfPresent(key);
     }
 
     @Override
-    protected void doStorePut(Object key, CacheValue<Object> cacheValue) {
-        cache.put(key, cacheValue);
-    }
-
-    protected void doStorePutAll(Map<Object, CacheValue<Object>> keyValues) {
-        cache.putAll(keyValues);
+    public Flux<KeyValue<String, CacheValue<Object>>> getAll(Set<? extends String> keys) {
+        return Flux.fromIterable(cache.getAllPresent(keys).entrySet())
+                .map(entry -> new KeyValue<>(entry.getKey(), entry.getValue()));
     }
 
     @Override
-    protected void doStoreRemove(Object key) {
-        cache.invalidate(key);
+    public Mono<Void> doPut(String key, Mono<CacheValue<Object>> value) {
+        return value.doOnSuccess(cacheValue -> cache.put(key, cacheValue)).then();
     }
 
     @Override
-    protected void doStoreRemoveAll(Set<Object> keys) {
-        cache.invalidateAll(keys);
+    public Mono<Void> doPutAll(Mono<Map<String, CacheValue<Object>>> mono) {
+        return mono.doOnSuccess(cache::putAll).then();
+    }
+
+    @Override
+    public Mono<Void> remove(String key) {
+        return Mono.just(key).doOnSuccess(cache::invalidate).then();
+    }
+
+    @Override
+    public Mono<Void> removeAll(Set<? extends String> keys) {
+        return Mono.just(keys).doOnSuccess(cache::invalidateAll).then();
     }
 
     @Override
     public Mono<Void> clear() {
-        return Mono.fromSupplier(() -> {
-            cache.invalidateAll();
-            return null;
-        });
+        return Mono.empty().doOnSuccess(vod -> cache.invalidateAll()).then();
+    }
+
+    @Override
+    public String getStoreName() {
+        return STORE_NAME;
     }
 
 }

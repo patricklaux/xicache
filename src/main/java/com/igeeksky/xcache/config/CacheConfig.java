@@ -1,12 +1,14 @@
 package com.igeeksky.xcache.config;
 
-import com.igeeksky.xcache.extension.convertor.KeyConvertor;
-import com.igeeksky.xcache.extension.*;
+import com.igeeksky.xcache.extension.Compressor;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
+import com.igeeksky.xcache.extension.convertor.KeyConvertor;
 import com.igeeksky.xcache.extension.lock.CacheLock;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.serializer.Serializer;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -15,19 +17,58 @@ import java.util.List;
  */
 public class CacheConfig<K, V> implements Cloneable {
 
+    // both
     private String name;
+
+    // Remote
+    private String storeName;
+
+    // both
+    private Charset charset = StandardCharsets.UTF_8;
+
+    // both
     private Class<K> keyType;
+
+    // both
     private Class<V> valueType;
-    private CacheLock<K> cacheLock;
+
+    // Local & Remote
+    private long expireAfterWrite;
+
+    // Remote String
+    private boolean useKeyPrefix = true;
+
+    // Local & Remote
     private boolean randomAliveTime = true;
+
+    // Local & Remote
     private boolean enableNullValue = true;
+
+    // Local & Remote
     private boolean enableCompressValue = false;
+
+    // Local & Remote
     private boolean enableSerializeValue = true;
+
+    // Local & Remote
     private Compressor compressor;
+
+    // Local & Remote
+    private CacheLock<K> cacheLock;
+
+    // both
     private KeyConvertor keyConvertor;
+
+    // Remote
     private Serializer<V> keySerializer;
+
+    // Local & Remote
     private Serializer<V> valueSerializer;
+
+    // both
     private ContainsPredicate<K> containsPredicate;
+
+    // both
     private List<CacheMonitor<V>> monitors;
 
     public CacheConfig() {
@@ -43,6 +84,22 @@ public class CacheConfig<K, V> implements Cloneable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
+
+    public void setCharset(Charset charset) {
+        this.charset = charset;
     }
 
     public Class<K> getKeyType() {
@@ -61,12 +118,20 @@ public class CacheConfig<K, V> implements Cloneable {
         this.valueType = valueType;
     }
 
-    public CacheLock<K> getCacheLock() {
-        return cacheLock;
+    public long getExpireAfterWrite() {
+        return expireAfterWrite;
     }
 
-    public void setCacheLock(CacheLock<K> cacheLock) {
-        this.cacheLock = cacheLock;
+    public void setExpireAfterWrite(long expireAfterWrite) {
+        this.expireAfterWrite = expireAfterWrite;
+    }
+
+    public boolean isUseKeyPrefix() {
+        return useKeyPrefix;
+    }
+
+    public void setUseKeyPrefix(boolean useKeyPrefix) {
+        this.useKeyPrefix = useKeyPrefix;
     }
 
     public boolean isRandomAliveTime() {
@@ -107,6 +172,14 @@ public class CacheConfig<K, V> implements Cloneable {
 
     public void setCompressor(Compressor compressor) {
         this.compressor = compressor;
+    }
+
+    public CacheLock<K> getCacheLock() {
+        return cacheLock;
+    }
+
+    public void setCacheLock(CacheLock<K> cacheLock) {
+        this.cacheLock = cacheLock;
     }
 
     public KeyConvertor getKeyConvertor() {

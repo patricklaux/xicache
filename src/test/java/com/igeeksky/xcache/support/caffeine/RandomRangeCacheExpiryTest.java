@@ -3,18 +3,10 @@ package com.igeeksky.xcache.support.caffeine;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.ExpiryCacheValue;
-import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.extension.serializer.JdkSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Patrick.Lau

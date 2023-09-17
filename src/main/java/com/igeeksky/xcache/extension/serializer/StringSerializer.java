@@ -38,6 +38,16 @@ public class StringSerializer implements Serializer<String> {
         return str.getBytes(charset);
     }
 
+    public static StringSerializer getInstance(Charset charset) {
+        if (Objects.equals(StandardCharsets.UTF_8, charset)) {
+            return UTF_8;
+        }
+        if (Objects.equals(StandardCharsets.US_ASCII, charset)) {
+            return US_ASCII;
+        }
+        return STRING_SERIALIZER_MAP.computeIfAbsent(charset, key -> new StringSerializer(charset));
+    }
+
     @Override
     public String deserialize(byte[] source) {
         if (null == source) {
@@ -58,13 +68,7 @@ public class StringSerializer implements Serializer<String> {
         @Override
         public <T> Serializer<T> get(String name, Charset charset, Class<T> type) {
             if (Objects.equals(String.class, type)) {
-                if (Objects.equals(StandardCharsets.UTF_8, charset)) {
-                    return (Serializer<T>) UTF_8;
-                }
-                if (Objects.equals(StandardCharsets.US_ASCII, charset)) {
-                    return (Serializer<T>) US_ASCII;
-                }
-                return (Serializer<T>) STRING_SERIALIZER_MAP.computeIfAbsent(charset, key -> new StringSerializer(charset));
+                return (Serializer<T>) StringSerializer.getInstance(charset);
             }
             throw new CacheConfigException("type must be String.class. " + type);
         }
