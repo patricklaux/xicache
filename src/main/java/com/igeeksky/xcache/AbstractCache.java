@@ -20,35 +20,25 @@ import java.util.concurrent.locks.Lock;
  */
 public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
-    private final String name;
-    private final Class<K> keyType;
-    private final Class<V> valueType;
-
-    // TODO 设置属性
-    private KeyConvertor keyConvertor;
-
-    private Serializer<V> localValueSerializer;
-
-    private Compressor localValueCompressor;
-
-    private Serializer<V> remoteValueSerializer;
-
-    private Compressor remoteValueCompressor;
-
-    private boolean serializeLocalValue;
-
-    private boolean compressLocalValue;
-
-    private boolean compressRemoteValue;
-
-    private final boolean useKeyPrefix = true;
-
-    private boolean allowNullValue;
-
     private final Object lock = new Object();
     private volatile SyncCache<K, V> syncCache;
     private volatile AsyncCache<K, V> asyncCache;
 
+    private final String name;
+    private final Class<K> keyType;
+    private final Class<V> valueType;
+
+    private final boolean compressLocalValue;
+    private final boolean compressRemoteValue;
+    private final boolean serializeLocalValue;
+    private final boolean enableNullLocalValue;
+    private final boolean enableNullRemoteValue;
+
+    private final KeyConvertor keyConvertor;
+    private final Compressor localValueCompressor;
+    private final Compressor remoteValueCompressor;
+    private final Serializer<V> localValueSerializer;
+    private final Serializer<V> remoteValueSerializer;
     private final CacheLock<K> cacheLock;
     private final ContainsPredicate<K> containsPredicate;
 
@@ -56,6 +46,16 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.valueType = config.getValueType();
+        this.compressLocalValue = config.getLocalConfig().isEnableCompressValue();
+        this.compressRemoteValue = config.getRemoteConfig().isEnableCompressValue();
+        this.serializeLocalValue = config.getLocalConfig().isEnableSerializeValue();
+        this.enableNullLocalValue = config.getLocalConfig().isEnableNullValue();
+        this.enableNullRemoteValue = config.getRemoteConfig().isEnableNullValue();
+        this.keyConvertor = config.getKeyConvertor();
+        this.localValueCompressor = config.getLocalConfig().getValueCompressor();
+        this.remoteValueCompressor = config.getRemoteConfig().getValueCompressor();
+        this.localValueSerializer = config.getLocalConfig().getValueSerializer();
+        this.remoteValueSerializer = config.getRemoteConfig().getValueSerializer();
         this.cacheLock = config.getCacheLock();
         this.containsPredicate = config.getContainsPredicate();
     }
@@ -227,7 +227,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     protected Object toLocalStoreValue(V value) {
         if (null == value) {
-            if (allowNullValue) {
+            if (enableNullLocalValue) {
                 return null;
             }
             throw new CacheValueNullException();
@@ -243,7 +243,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     protected byte[] toRemoteStoreValue(V value) {
         if (null == value) {
-            if (allowNullValue) {
+            if (enableNullRemoteValue) {
                 return NullValue.INSTANCE_BYTES;
             }
             throw new CacheValueNullException();
@@ -262,7 +262,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         }
         // 本地缓存需要判断是否允许空值
         if (!cacheValue.hasValue()) {
-            if (allowNullValue) {
+            if (enableNullLocalValue) {
                 return Mono.justOrEmpty((CacheValue<V>) cacheValue);
             }
             return Mono.empty();
@@ -290,7 +290,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         byte[] storeValue = cacheValue.getValue();
         // 远程缓存需要判断是否是空值(NullValue)
         if (Arrays.equals(NullValue.INSTANCE_BYTES, storeValue)) {
-            if (allowNullValue) {
+            if (enableNullRemoteValue) {
                 return Mono.just(CacheValues.emptyCacheValue());
             }
             return Mono.empty();

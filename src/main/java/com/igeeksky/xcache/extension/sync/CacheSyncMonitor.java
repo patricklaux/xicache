@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.sync;
 
 import com.igeeksky.xcache.common.StoreType;
-import com.igeeksky.xcache.config.CacheType;
+import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.serializer.Serializer;

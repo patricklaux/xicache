@@ -42,14 +42,14 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
             }
         }
 
-        boolean randomAliveTime = config.isRandomAliveTime();
-        long expireAfterWrite = config.getExpireAfterWrite();
-        long expireAfterAccess = config.getExpireAfterAccess();
+        boolean enableRandomTtl = config.getLocalConfig().isEnableRandomTtl();
+        long expireAfterWrite = config.getLocalConfig().getExpireAfterWrite();
+        long expireAfterAccess = config.getLocalConfig().getExpireAfterAccess();
 
         // 1.2. 基于随机时间的驱逐策略
-        if (randomAliveTime) {
+        if (enableRandomTtl) {
             if (expireAfterWrite <= 0) {
-                throw new CacheConfigException("randomAliveTime: expireAfterWrite must be greater than 0");
+                throw new CacheConfigException("enableRandomTtl: expireAfterWrite must be greater than 0");
             }
             Duration durationWrite = Duration.ofMillis(expireAfterWrite);
             Duration durationAccess = Duration.ofMillis(expireAfterAccess);
@@ -71,19 +71,19 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
 
     private <K, V> LocalCacheStore createCaffeineStore(CacheConfig<K, V> config, Caffeine<Object, Object> builder) {
         // 2. 设置初始化缓存容量
-        int initialCapacity = config.getInitialCapacity();
+        int initialCapacity = config.getLocalConfig().getInitialSize();
         if (initialCapacity > 0) {
             builder.initialCapacity(initialCapacity);
         }
 
         // 3. 基于容量的驱逐策略
-        long maximumSize = config.getMaximumSize();
+        long maximumSize = config.getLocalConfig().getMaximumSize();
         if (maximumSize > 0) {
             builder.maximumSize(maximumSize);
         }
 
         // 4. 基于权重的驱逐策略
-        long maximumWeight = config.getMaximumWeight();
+        long maximumWeight = config.getLocalConfig().getMaximumWeight();
         if (maximumWeight > 0) {
             builder.maximumWeight(maximumWeight);
             if (weigherProvider != null) {
@@ -102,7 +102,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
         String soft = "soft";
 
         // 5.1. 基于 Key 的弱引用驱逐策略
-        String keyStrength = StringUtils.toLowerCase(config.getKeyStrength());
+        String keyStrength = StringUtils.toLowerCase(config.getLocalConfig().getKeyStrength());
         if (StringUtils.hasLength(keyStrength)) {
             if (Objects.equals(weak, keyStrength)) {
                 builder.weakKeys();
@@ -112,7 +112,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
         }
 
         // 5.2. 基于 value 的弱引用和软引用驱逐策略
-        String valueStrength = StringUtils.toLowerCase(config.getValueStrength());
+        String valueStrength = StringUtils.toLowerCase(config.getLocalConfig().getValueStrength());
         if (StringUtils.hasLength(valueStrength)) {
             if (Objects.equals(weak, valueStrength)) {
                 builder.weakValues();

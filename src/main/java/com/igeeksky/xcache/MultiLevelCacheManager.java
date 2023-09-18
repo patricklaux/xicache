@@ -1,5 +1,6 @@
 package com.igeeksky.xcache;
 
+import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.config.*;
 import com.igeeksky.xcache.extension.contains.AlwaysTrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;

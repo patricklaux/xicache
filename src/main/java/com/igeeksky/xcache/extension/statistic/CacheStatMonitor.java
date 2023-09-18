@@ -1,6 +1,5 @@
 package com.igeeksky.xcache.extension.statistic;
 
-import com.igeeksky.xcache.common.CacheLevel;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
@@ -22,8 +21,9 @@ public class CacheStatMonitor<V> implements CacheMonitor<V> {
     private final String name;
     private final String application;
 
-    private final AtomicReference<CacheStatCounter> refL1 = new AtomicReference<>(new CacheStatCounter());
-    private final AtomicReference<CacheStatCounter> refL2 = new AtomicReference<>(new CacheStatCounter());
+    private final AtomicReference<CacheStatCounter> refNone = new AtomicReference<>(new CacheStatCounter());
+    private final AtomicReference<CacheStatCounter> refLocal = new AtomicReference<>(new CacheStatCounter());
+    private final AtomicReference<CacheStatCounter> refRemote = new AtomicReference<>(new CacheStatCounter());
 
     public CacheStatMonitor(String name, String application) {
         this.name = name;
@@ -34,74 +34,86 @@ public class CacheStatMonitor<V> implements CacheMonitor<V> {
     public void afterGet(String key, CacheValue<V> cacheValue, StoreType storeType) {
         if (StoreType.LOCAL == storeType) {
             if (null == cacheValue) {
-                refL1.get().incMisses();
+                refLocal.get().incMisses();
             } else {
-                refL1.get().incHits();
+                refLocal.get().incHits();
+            }
+        } else if (StoreType.REMOTE == storeType) {
+            if (null == cacheValue) {
+                refLocal.get().incMisses();
+            } else {
+                refRemote.get().incHits();
             }
         } else {
-            if (null == cacheValue) {
-                refL1.get().incMisses();
-            } else {
-                refL2.get().incHits();
-            }
+            refNone.get().incMisses();
         }
     }
 
     @Override
     public void afterPut(String key, V value, StoreType storeType) {
         if (StoreType.LOCAL == storeType) {
-            refL1.get().incPuts(1);
+            refLocal.get().incPuts(1);
+        } else if (StoreType.REMOTE == storeType) {
+            refRemote.get().incPuts(1);
         } else {
-            refL2.get().incPuts(1);
+            refNone.get().incPuts(1);
         }
     }
 
     @Override
     public void afterPutAll(Map<String, ? extends V> keyValues, StoreType storeType) {
         if (StoreType.LOCAL == storeType) {
-            refL1.get().incPuts(keyValues.size());
+            refLocal.get().incPuts(keyValues.size());
+        } else if (StoreType.REMOTE == storeType) {
+            refRemote.get().incPuts(keyValues.size());
         } else {
-            refL2.get().incPuts(keyValues.size());
+            refNone.get().incPuts(keyValues.size());
         }
     }
 
     @Override
     public void afterLoad(String key, V value) {
-        refL1.get().incLoads();
+        refLocal.get().incLoads();
     }
 
     @Override
     public void afterRemove(String key, StoreType storeType) {
         if (StoreType.LOCAL == storeType) {
-            refL1.get().incRemovals(1);
+            refLocal.get().incRemovals(1);
+        } else if (StoreType.REMOTE == storeType) {
+            refRemote.get().incRemovals(1);
         } else {
-            refL2.get().incRemovals(1);
+            refNone.get().incRemovals(1);
         }
     }
 
     @Override
     public void afterRemoveAll(Set<String> keys, StoreType storeType) {
         if (StoreType.LOCAL == storeType) {
-            refL1.get().incRemovals(keys.size());
+            refLocal.get().incRemovals(keys.size());
+        } else if (StoreType.REMOTE == storeType) {
+            refRemote.get().incRemovals(keys.size());
         } else {
-            refL2.get().incRemovals(keys.size());
+            refNone.get().incRemovals(keys.size());
         }
     }
 
     @Override
     public void afterClear(StoreType storeType) {
         if (StoreType.LOCAL == storeType) {
-            refL1.get().incClears();
+            refLocal.get().incClears();
+        } else if (StoreType.REMOTE == storeType) {
+            refRemote.get().incClears();
         } else {
-            refL2.get().incClears();
+            refNone.get().incClears();
         }
     }
 
     public Tuple2<CacheStatMessage, CacheStatMessage> collect() {
-        CacheStatCounter cntL1 = refL1.getAndSet(new CacheStatCounter());
-        CacheStatCounter cntL2 = refL2.getAndSet(new CacheStatCounter());
-        CacheStatMessage msgL1 = new CacheStatMessage(name, application, CacheLevel.L1, cntL1);
-        CacheStatMessage msgL2 = new CacheStatMessage(name, application, CacheLevel.L2, cntL2);
-        return Tuples.of(msgL1, msgL2);
+        CacheStatCounter localCounter = refLocal.getAndSet(new CacheStatCounter());
+        CacheStatCounter remoteCounter = refRemote.getAndSet(new CacheStatCounter());
+        CacheStatMessage localStatMsg = new CacheStatMessage(name, application, StoreType.LOCAL, localCounter);
+        CacheStatMessage remoteStatMsg = new CacheStatMessage(name, application, StoreType.REMOTE, remoteCounter);
+        return Tuples.of(localStatMsg, remoteStatMsg);
     }
 }

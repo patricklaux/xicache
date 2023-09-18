@@ -18,26 +18,22 @@ public class RedisStringCacheStore implements RemoteCacheStore {
 
     public static final String STORE_NAME = "redis-string";
 
-    private final boolean useKeyPrefix;
-
-    private final StringSerializer serializer;
-
-    private final RedisStringWriter redisWriter;
-
-    private final CacheKeyPrefix cacheKeyPrefix;
+    private final boolean enableKeyPrefix;
+    private final boolean enableRandomTtl;
 
     private final long expireAfterWrite;
-
     private final long expireAfterWriteMin;
 
-    private final boolean randomAliveTime;
+    private final StringSerializer serializer;
+    private final RedisStringWriter redisWriter;
+    private final CacheKeyPrefix cacheKeyPrefix;
 
     public RedisStringCacheStore(CacheConfig<?, ?> config, StringSerializer serializer, RedisStringWriter redisWriter) {
         this.serializer = serializer;
         this.redisWriter = redisWriter;
-        this.useKeyPrefix = config.isUseKeyPrefix();
-        this.randomAliveTime = config.isRandomAliveTime();
-        this.expireAfterWrite = config.getExpireAfterWrite();
+        this.enableKeyPrefix = config.getRemoteConfig().isEnableKeyPrefix();
+        this.enableRandomTtl = config.getRemoteConfig().isEnableRandomTtl();
+        this.expireAfterWrite = config.getRemoteConfig().getExpireAfterWrite();
         this.expireAfterWriteMin = (long) (expireAfterWrite * 0.8);
         this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), config.getCharset(), serializer);
     }
@@ -123,14 +119,14 @@ public class RedisStringCacheStore implements RemoteCacheStore {
     }
 
     private byte[] toStoreKey(String key) {
-        if (useKeyPrefix) {
+        if (enableKeyPrefix) {
             return cacheKeyPrefix.concatPrefixBytes(key);
         }
         return serializer.serialize(key);
     }
 
     private String fromStoreKey(byte[] storeKey) {
-        if (useKeyPrefix) {
+        if (enableKeyPrefix) {
             return cacheKeyPrefix.removePrefix(storeKey);
         }
         return serializer.deserialize(storeKey);
@@ -142,7 +138,7 @@ public class RedisStringCacheStore implements RemoteCacheStore {
      * @return 如果 randomAliveTime 为 true，随机生成过期时间；否则返回配置的 expireAfterWrite
      */
     private long timeToLive() {
-        if (randomAliveTime) {
+        if (enableRandomTtl) {
             ThreadLocalRandom random = ThreadLocalRandom.current();
             return random.nextLong(expireAfterWriteMin, expireAfterWrite);
         }

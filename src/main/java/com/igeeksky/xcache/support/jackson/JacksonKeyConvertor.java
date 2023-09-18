@@ -8,7 +8,7 @@ import com.igeeksky.xcache.extension.convertor.KeyConvertor;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-15
  */
-public class JacksonKeyConvertor extends KeyConvertor {
+public class JacksonKeyConvertor implements KeyConvertor {
 
     private static final JacksonKeyConvertor INSTANCE = new JacksonKeyConvertor();
 

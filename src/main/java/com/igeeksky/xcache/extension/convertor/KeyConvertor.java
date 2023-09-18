@@ -8,7 +8,7 @@ import java.util.function.Function;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-08
  */
-public abstract class KeyConvertor implements Function<Object, String> {
+public interface KeyConvertor extends Function<Object, String> {
 
     /**
      * 原对象 转换成 字符串
@@ -17,13 +17,13 @@ public abstract class KeyConvertor implements Function<Object, String> {
      * @return String
      */
     @Override
-    public String apply(Object original) {
+    default String apply(Object original) {
         if (original instanceof CharSequence || original instanceof Number || original instanceof Boolean) {
             return original.toString();
         }
         return doApply(original);
     }
 
-    protected abstract String doApply(Object original);
+    String doApply(Object original);
 
 }

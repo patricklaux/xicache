@@ -30,7 +30,7 @@ public class LettuceCacheStoreProvider implements RemoteCacheStoreProvider {
     public <K, V> RemoteCacheStore getRemoteCacheStore(CacheConfig<K, V> config) {
         Charset charset = config.getCharset();
         StringSerializer serializer = StringSerializer.getInstance(charset);
-        String storeName = StringUtils.toLowerCase(config.getStoreName());
+        String storeName = StringUtils.toLowerCase(config.getRemoteConfig().getStoreName());
         if (storeName == null || Objects.equals(storeName, RedisStringCacheStore.STORE_NAME)) {
             return new RedisStringCacheStore(config, serializer, this.redisStringWriter);
         }
