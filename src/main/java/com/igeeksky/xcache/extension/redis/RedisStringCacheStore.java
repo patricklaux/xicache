@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-03
  */
-public class RedisStringCacheStore<K, V> implements RemoteCacheStore {
+public class RedisStringCacheStore implements RemoteCacheStore {
 
     public static final String STORE_NAME = "redis-string";
 
@@ -32,7 +32,7 @@ public class RedisStringCacheStore<K, V> implements RemoteCacheStore {
 
     private final boolean randomAliveTime;
 
-    public RedisStringCacheStore(CacheConfig<K, V> config, StringSerializer serializer, RedisStringWriter redisWriter) {
+    public RedisStringCacheStore(CacheConfig<?, ?> config, StringSerializer serializer, RedisStringWriter redisWriter) {
         this.serializer = serializer;
         this.redisWriter = redisWriter;
         this.useKeyPrefix = config.isUseKeyPrefix();

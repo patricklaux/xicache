@@ -2,9 +2,8 @@ package com.igeeksky.xcache.support.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Weigher;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.extension.serializer.JdkSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,14 +28,11 @@ class CaffeineCacheStoreTest {
     @BeforeEach
     void setUp() {
         Hooks.onOperatorDebug();
-        CacheConfig<String, Object> config = new CacheConfig<>();
-        config.setValueSerializer(new JdkSerializer<>());
-        config.setName("user");
         Cache<String, CacheValue<Object>> caffeine = Caffeine.newBuilder()
                 .expireAfterWrite(3, TimeUnit.SECONDS)
                 .maximumSize(1024)
                 .build();
-        cache = new CaffeineCacheStore<>(config, caffeine);
+        cache = new CaffeineCacheStore<>(caffeine);
         Hooks.resetOnOperatorDebug();
     }
 
@@ -54,14 +50,11 @@ class CaffeineCacheStoreTest {
 
     @Test
     void getBytes() throws InterruptedException {
-        CacheConfig<String, byte[]> config = new CacheConfig<>();
-        config.setValueSerializer(new JdkSerializer<>());
-        config.setName("user");
         Cache<String, CacheValue<Object>> caffeine = Caffeine.newBuilder()
                 .expireAfterWrite(3, TimeUnit.SECONDS)
                 .maximumSize(1024)
                 .build();
-        CaffeineCacheStore<String, byte[]> cache = new CaffeineCacheStore<>(config, caffeine);
+        CaffeineCacheStore<String, byte[]> cache = new CaffeineCacheStore<>(caffeine);
 
         String str = "hash";
         byte[] source = str.getBytes(StandardCharsets.UTF_8);
@@ -75,15 +68,30 @@ class CaffeineCacheStoreTest {
     }
 
     @Test
+    void testWeigher() {
+        Cache<String, CacheValue<Object>> caffeine = Caffeine.newBuilder()
+                .expireAfterWrite(3, TimeUnit.SECONDS)
+                .maximumWeight(100)
+                .weigher(Weigher.singletonWeigher())
+                .build();
+        CaffeineCacheStore<String, byte[]> cache = new CaffeineCacheStore<>(caffeine);
+
+        String str = "hash";
+        byte[] source = str.getBytes(StandardCharsets.UTF_8);
+        cache.put(str, Mono.just(source)).subscribe();
+
+        Set<String> set = new HashSet<>();
+        set.add(str);
+        cache.getAll(set).subscribe(kv -> System.out.println(kv.getKey() + ":" + new String((byte[]) kv.getValue().getValue())));
+    }
+
+    @Test
     void getBytes2() throws InterruptedException {
-        CacheConfig<String, byte[]> config = new CacheConfig<>();
-        config.setValueSerializer(new JdkSerializer<>());
-        config.setName("user");
         Cache<String, CacheValue<Object>> caffeine = Caffeine.newBuilder()
                 .expireAfterWrite(3, TimeUnit.SECONDS)
                 .maximumSize(1024)
                 .build();
-        CaffeineCacheStore<String, byte[]> cache = new CaffeineCacheStore<>(config, caffeine);
+        CaffeineCacheStore<String, byte[]> cache = new CaffeineCacheStore<>(caffeine);
 
         String str = "hash";
         byte[] source = str.getBytes(StandardCharsets.UTF_8);
@@ -93,14 +101,11 @@ class CaffeineCacheStoreTest {
 
     @Test
     void doGetAll() {
-        CacheConfig<String, byte[]> config = new CacheConfig<>();
-        config.setValueSerializer(new JdkSerializer<>());
-        config.setName("user");
         Cache<String, CacheValue<Object>> caffeine = Caffeine.newBuilder()
                 .expireAfterWrite(3, TimeUnit.SECONDS)
                 .maximumSize(1024)
                 .build();
-        CaffeineCacheStore<String, byte[]> cache = new CaffeineCacheStore<>(config, caffeine);
+        CaffeineCacheStore<String, byte[]> cache = new CaffeineCacheStore<>(caffeine);
 
         String str = "hash";
         byte[] source = str.getBytes(StandardCharsets.UTF_8);

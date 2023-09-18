@@ -18,7 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-16
  */
-public class RandomRangeCacheExpiry<K, V> implements Expiry<K, CacheValue<V>> {
+public class RandomRangeExpiry<K, V> implements Expiry<K, CacheValue<V>> {
 
     // 创建（更新）后的最小存活时间（单位：nanos）
     private final long expireAfterCreateNanosMin;
@@ -29,7 +29,7 @@ public class RandomRangeCacheExpiry<K, V> implements Expiry<K, CacheValue<V>> {
     // 访问后的存活时间
     private final long expiresAfterAccessNanos;
 
-    public RandomRangeCacheExpiry(@NonNull Duration expireAfterCreate, @NonNull Duration expiresAfterAccess) {
+    public RandomRangeExpiry(@NonNull Duration expireAfterCreate, @NonNull Duration expiresAfterAccess) {
         this.expireAfterCreateNanosMax = expireAfterCreate.toNanos();
         this.expireAfterCreateNanosMin = (long) (expireAfterCreateNanosMax * 0.8);
         this.expiresAfterAccessNanos = expiresAfterAccess.toNanos();

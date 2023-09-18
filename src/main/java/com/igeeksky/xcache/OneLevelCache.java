@@ -21,7 +21,6 @@ import java.util.Set;
  */
 public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
-
     private final LocalCacheStore localStore;
 
     private final RemoteCacheStore remoteStore;

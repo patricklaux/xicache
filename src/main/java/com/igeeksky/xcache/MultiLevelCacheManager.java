@@ -12,8 +12,9 @@ import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProvider;
 import com.igeeksky.xcache.extension.sync.CacheMessagePublisher;
 import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
-import com.igeeksky.xcache.store.CacheStore;
-import com.igeeksky.xcache.store.CacheStoreProvider;
+import com.igeeksky.xcache.store.LocalCacheStore;
+import com.igeeksky.xcache.store.LocalCacheStoreProvider;
+import com.igeeksky.xcache.store.RemoteCacheStoreProvider;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -43,7 +44,9 @@ public class MultiLevelCacheManager implements CacheManager {
 
     private final ConcurrentMap<String, CacheMonitorProvider> monitorProviderMap = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, CacheStoreProvider> storeProviderMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, LocalCacheStoreProvider> localStoreProviderMap = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<String, RemoteCacheStoreProvider> remoteStoreProviderMap = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, ContainsPredicateProvider> predicateProviderMap = new ConcurrentHashMap<>();
 
@@ -97,16 +100,20 @@ public class MultiLevelCacheManager implements CacheManager {
             // 返回本地缓存
             CacheProps.Config first = cacheProps.getFirst();
             String beanId = first.getCacheStore();
-            CacheStoreProvider cacheStoreProvider = storeProviderMap.get(beanId);
+            LocalCacheStoreProvider localStoreProvider = localStoreProviderMap.get(beanId);
             // 构建配置
 
             // 获取缓存
-            CacheStore<K, V> cacheStore = cacheStoreProvider.get(cacheConfig);
+            LocalCacheStore localCacheStore = localStoreProvider.getLocalCacheStore(cacheConfig);
 
         }
 
         if (cacheType == CacheType.REMOTE) {
             // 返回远程缓存
+            CacheProps.Config second = cacheProps.getSecond();
+            String beanId = second.getCacheStore();
+            RemoteCacheStoreProvider cacheStoreProvider = remoteStoreProviderMap.get(beanId);
+            cacheStoreProvider.getRemoteCacheStore(cacheConfig);
 
         }
 
@@ -228,8 +235,8 @@ public class MultiLevelCacheManager implements CacheManager {
         this.monitorProviderMap.put(beanId, provider);
     }
 
-    public void addProvider(String beanId, CacheStoreProvider provider) {
-        this.storeProviderMap.put(beanId, provider);
+    public void addProvider(String beanId, RemoteCacheStoreProvider provider) {
+        this.remoteStoreProviderMap.put(beanId, provider);
     }
 
 }

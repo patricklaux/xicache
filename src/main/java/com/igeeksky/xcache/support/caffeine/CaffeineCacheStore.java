@@ -22,7 +22,7 @@ public class CaffeineCacheStore<K, V> implements LocalCacheStore {
 
     private final Cache<String, CacheValue<Object>> cache;
 
-    public CaffeineCacheStore(CacheConfig<K, V> config, Cache<String, CacheValue<Object>> cache) {
+    public CaffeineCacheStore(Cache<String, CacheValue<Object>> cache) {
         this.cache = cache;
     }
 

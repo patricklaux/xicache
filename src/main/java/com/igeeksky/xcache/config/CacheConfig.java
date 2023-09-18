@@ -9,7 +9,9 @@ import com.igeeksky.xcache.extension.serializer.Serializer;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Patrick.Lau
@@ -32,14 +34,32 @@ public class CacheConfig<K, V> implements Cloneable {
     // both
     private Class<V> valueType;
 
+    // Local
+    private int initialCapacity;
+
+    // Local
+    private long maximumSize;
+
+    // Local(Caffeine)
+    private long maximumWeight;
+
+    // Local(Caffeine)
+    private String keyStrength;
+
+    // Local(Caffeine)
+    private String valueStrength;
+
     // Local & Remote
     private long expireAfterWrite;
+
+    // Local
+    private long expireAfterAccess;
 
     // Remote String
     private boolean useKeyPrefix = true;
 
     // Local & Remote
-    private boolean randomAliveTime = true;
+    private boolean randomAliveTime = false;
 
     // Local & Remote
     private boolean enableNullValue = true;
@@ -70,6 +90,8 @@ public class CacheConfig<K, V> implements Cloneable {
 
     // both
     private List<CacheMonitor<V>> monitors;
+
+    private Map<String, Object> metadata = new HashMap<>();
 
     public CacheConfig() {
     }
@@ -118,12 +140,60 @@ public class CacheConfig<K, V> implements Cloneable {
         this.valueType = valueType;
     }
 
+    public int getInitialCapacity() {
+        return initialCapacity;
+    }
+
+    public void setInitialCapacity(int initialCapacity) {
+        this.initialCapacity = initialCapacity;
+    }
+
+    public long getMaximumSize() {
+        return maximumSize;
+    }
+
+    public void setMaximumSize(long maximumSize) {
+        this.maximumSize = maximumSize;
+    }
+
+    public long getMaximumWeight() {
+        return maximumWeight;
+    }
+
+    public void setMaximumWeight(long maximumWeight) {
+        this.maximumWeight = maximumWeight;
+    }
+
+    public String getKeyStrength() {
+        return keyStrength;
+    }
+
+    public void setKeyStrength(String keyStrength) {
+        this.keyStrength = keyStrength;
+    }
+
+    public String getValueStrength() {
+        return valueStrength;
+    }
+
+    public void setValueStrength(String valueStrength) {
+        this.valueStrength = valueStrength;
+    }
+
     public long getExpireAfterWrite() {
         return expireAfterWrite;
     }
 
     public void setExpireAfterWrite(long expireAfterWrite) {
         this.expireAfterWrite = expireAfterWrite;
+    }
+
+    public long getExpireAfterAccess() {
+        return expireAfterAccess;
+    }
+
+    public void setExpireAfterAccess(long expireAfterAccess) {
+        this.expireAfterAccess = expireAfterAccess;
     }
 
     public boolean isUseKeyPrefix() {
@@ -220,6 +290,14 @@ public class CacheConfig<K, V> implements Cloneable {
 
     public void setMonitors(List<CacheMonitor<V>> monitors) {
         this.monitors = monitors;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     /**

@@ -12,13 +12,13 @@ import java.time.Duration;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-14
  */
-class RandomRangeCacheExpiryTest {
+class RandomRangeExpiryTest {
 
     Cache<Object, CacheValue<Object>> cache;
 
     @BeforeEach
     void setUp() {
-        RandomRangeCacheExpiry<Object, Object> expiry = new RandomRangeCacheExpiry<>(Duration.ofSeconds(2), Duration.ofSeconds(2));
+        RandomRangeExpiry<Object, Object> expiry = new RandomRangeExpiry<>(Duration.ofSeconds(2), Duration.ofSeconds(2));
         cache = Caffeine.newBuilder()
                 .expireAfter(expiry)
                 // .expireAfterWrite(2, TimeUnit.SECONDS)

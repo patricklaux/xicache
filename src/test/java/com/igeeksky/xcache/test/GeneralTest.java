@@ -1,9 +1,11 @@
 package com.igeeksky.xcache.test;
 
 import com.igeeksky.xcache.User;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,6 +14,12 @@ import java.util.Set;
  * @since 0.0.4 2023-09-09
  */
 public class GeneralTest {
+
+    @Test
+    void testDuration() {
+        Duration duration = Duration.ofMillis(-1L);
+        Assertions.assertEquals(-1L, duration.toMillis());
+    }
 
     @Test
     void testThrowException() {
