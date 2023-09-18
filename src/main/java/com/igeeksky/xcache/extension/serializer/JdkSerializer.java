@@ -4,6 +4,7 @@ package com.igeeksky.xcache.extension.serializer;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * JDK内置序列化器
@@ -13,6 +14,10 @@ import java.nio.charset.StandardCharsets;
  */
 public class JdkSerializer<T> implements Serializer<T> {
 
+    public static final JdkSerializer<Object> UTF_8 = new JdkSerializer<>();
+
+    public static final JdkSerializer<Object> ASCII = new JdkSerializer<>(StandardCharsets.US_ASCII);
+
     private final Charset charset;
 
     public JdkSerializer() {
@@ -21,6 +26,16 @@ public class JdkSerializer<T> implements Serializer<T> {
 
     public JdkSerializer(Charset charset) {
         this.charset = charset;
+    }
+
+    public static JdkSerializer<Object> getInstance(Charset charset) {
+        if (Objects.equals(StandardCharsets.UTF_8, charset)) {
+            return UTF_8;
+        } else if (Objects.equals(StandardCharsets.US_ASCII, charset)) {
+            return ASCII;
+        } else {
+            return new JdkSerializer<>(charset);
+        }
     }
 
     @Override
@@ -34,8 +49,8 @@ public class JdkSerializer<T> implements Serializer<T> {
             objectOutputStream.flush();
             return byteArrayOutputStream.toByteArray();
         } catch (IOException e) {
-            String msg = String.format("can't serialize [%s]. %s", obj, e.getMessage());
-            throw new SerializationFailedException(msg, e);
+            String errMsg = String.format("can't serialize [%s]. %s", obj, e.getMessage());
+            throw new SerializationFailedException(errMsg, e);
         }
     }
 
@@ -49,8 +64,8 @@ public class JdkSerializer<T> implements Serializer<T> {
              ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
             return (T) objectInputStream.readObject();
         } catch (ClassNotFoundException | IOException e) {
-            String msg = String.format("can't deserialize [%s]. %s", new String(source, charset), e.getMessage());
-            throw new SerializationFailedException(msg, e);
+            String errMsg = String.format("can't deserialize [%s]. %s", new String(source, charset), e.getMessage());
+            throw new SerializationFailedException(errMsg, e);
         }
     }
 

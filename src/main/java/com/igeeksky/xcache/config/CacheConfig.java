@@ -1,34 +1,52 @@
 package com.igeeksky.xcache.config;
 
-import com.igeeksky.xcache.extension.convertor.KeyConvertor;
-import com.igeeksky.xcache.extension.*;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
+import com.igeeksky.xcache.extension.convertor.KeyConvertor;
 import com.igeeksky.xcache.extension.lock.CacheLock;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
-import com.igeeksky.xcache.extension.serializer.Serializer;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-09
  */
-public class CacheConfig<K, V> implements Cloneable {
+public class CacheConfig<K, V> {
 
+    // both
     private String name;
+
+    // both
+    private Charset charset = StandardCharsets.UTF_8;
+
+    // both
     private Class<K> keyType;
+
+    // both
     private Class<V> valueType;
+
+    // both
     private CacheLock<K> cacheLock;
-    private boolean randomAliveTime = true;
-    private boolean enableNullValue = true;
-    private boolean enableCompressValue = false;
-    private boolean enableSerializeValue = true;
-    private Compressor compressor;
+
+    // both
     private KeyConvertor keyConvertor;
-    private Serializer<V> keySerializer;
-    private Serializer<V> valueSerializer;
+
+    // both
     private ContainsPredicate<K> containsPredicate;
-    private List<CacheMonitor<K, V>> monitors;
+
+    // both
+    private List<CacheMonitor<V>> monitors = new ArrayList<>();
+
+    private LocalConfig<K, V> localConfig = new LocalConfig<>();
+
+    private RemoteConfig<K, V> remoteConfig = new RemoteConfig<>();
+
+    private Map<String, Object> metadata = new HashMap<>();
 
     public CacheConfig() {
     }
@@ -43,6 +61,14 @@ public class CacheConfig<K, V> implements Cloneable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
+
+    public void setCharset(Charset charset) {
+        this.charset = charset;
     }
 
     public Class<K> getKeyType() {
@@ -69,68 +95,12 @@ public class CacheConfig<K, V> implements Cloneable {
         this.cacheLock = cacheLock;
     }
 
-    public boolean isRandomAliveTime() {
-        return randomAliveTime;
-    }
-
-    public void setRandomAliveTime(boolean randomAliveTime) {
-        this.randomAliveTime = randomAliveTime;
-    }
-
-    public boolean isEnableNullValue() {
-        return enableNullValue;
-    }
-
-    public void setEnableNullValue(boolean enableNullValue) {
-        this.enableNullValue = enableNullValue;
-    }
-
-    public boolean isEnableCompressValue() {
-        return enableCompressValue;
-    }
-
-    public void setEnableCompressValue(boolean enableCompressValue) {
-        this.enableCompressValue = enableCompressValue;
-    }
-
-    public boolean isEnableSerializeValue() {
-        return enableSerializeValue;
-    }
-
-    public void setEnableSerializeValue(boolean enableSerializeValue) {
-        this.enableSerializeValue = enableSerializeValue;
-    }
-
-    public Compressor getCompressor() {
-        return compressor;
-    }
-
-    public void setCompressor(Compressor compressor) {
-        this.compressor = compressor;
-    }
-
     public KeyConvertor getKeyConvertor() {
         return keyConvertor;
     }
 
     public void setKeyConvertor(KeyConvertor keyConvertor) {
         this.keyConvertor = keyConvertor;
-    }
-
-    public Serializer<V> getKeySerializer() {
-        return keySerializer;
-    }
-
-    public void setKeySerializer(Serializer<V> keySerializer) {
-        this.keySerializer = keySerializer;
-    }
-
-    public Serializer<V> getValueSerializer() {
-        return valueSerializer;
-    }
-
-    public void setValueSerializer(Serializer<V> valueSerializer) {
-        this.valueSerializer = valueSerializer;
     }
 
     public ContainsPredicate<K> getContainsPredicate() {
@@ -141,25 +111,36 @@ public class CacheConfig<K, V> implements Cloneable {
         this.containsPredicate = containsPredicate;
     }
 
-    public List<CacheMonitor<K, V>> getMonitors() {
+    public List<CacheMonitor<V>> getMonitors() {
         return monitors;
     }
 
-    public void setMonitors(List<CacheMonitor<K, V>> monitors) {
+    public void setMonitors(List<CacheMonitor<V>> monitors) {
         this.monitors = monitors;
     }
 
-    /**
-     * 浅 copy
-     *
-     * @return CacheConfig<K, V>
-     */
-    @SuppressWarnings("unchecked")
-    public CacheConfig<K, V> clone() {
-        try {
-            return (CacheConfig<K, V>) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
+    public LocalConfig<K, V> getLocalConfig() {
+        return localConfig;
     }
+
+    public void setLocalConfig(LocalConfig<K, V> localConfig) {
+        this.localConfig = localConfig;
+    }
+
+    public RemoteConfig<K, V> getRemoteConfig() {
+        return remoteConfig;
+    }
+
+    public void setRemoteConfig(RemoteConfig<K, V> remoteConfig) {
+        this.remoteConfig = remoteConfig;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
 }

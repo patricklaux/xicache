@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.monitor;
 
-import com.igeeksky.xcache.common.CacheLevel;
 import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.StoreType;
 
 import java.util.*;
 
@@ -9,49 +9,49 @@ import java.util.*;
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-20
  */
-public class CacheMonitorProxy<K, V> implements CacheMonitor<K, V> {
+public class CacheMonitorProxy<V> implements CacheMonitor<V> {
 
-    private final List<CacheMonitor<K, V>> cacheMonitors = new ArrayList<>();
+    private final List<CacheMonitor<V>> cacheMonitors = new ArrayList<>();
 
-    public void addCacheMonitors(Collection<CacheMonitor<K, V>> cacheMonitors) {
+    public void addCacheMonitors(Collection<CacheMonitor<V>> cacheMonitors) {
         if (null != cacheMonitors) {
             this.cacheMonitors.addAll(cacheMonitors);
         }
     }
 
     @Override
-    public void afterGet(K key, CacheValue<V> cacheValue, CacheLevel cacheLevel) {
-        cacheMonitors.forEach(monitor -> monitor.afterGet(key, cacheValue, cacheLevel));
+    public void afterGet(String key, CacheValue<V> cacheValue, StoreType storeType) {
+        cacheMonitors.forEach(monitor -> monitor.afterGet(key, cacheValue, storeType));
     }
 
     @Override
-    public void afterLoad(K key, V value) {
+    public void afterLoad(String key, V value) {
         cacheMonitors.forEach(monitor -> monitor.afterLoad(key, value));
     }
 
     @Override
-    public void afterPut(K key, V value, CacheLevel cacheLevel) {
-        cacheMonitors.forEach(monitor -> monitor.afterPut(key, value, cacheLevel));
+    public void afterPut(String key, V value, StoreType storeType) {
+        cacheMonitors.forEach(monitor -> monitor.afterPut(key, value, storeType));
     }
 
     @Override
-    public void afterPutAll(Map<? extends K, ? extends V> keyValues, CacheLevel cacheLevel) {
-        cacheMonitors.forEach(monitor -> monitor.afterPutAll(keyValues, cacheLevel));
+    public void afterPutAll(Map<String, ? extends V> keyValues, StoreType storeType) {
+        cacheMonitors.forEach(monitor -> monitor.afterPutAll(keyValues, storeType));
     }
 
     @Override
-    public void afterRemove(K key, CacheLevel cacheLevel) {
-        cacheMonitors.forEach(monitor -> monitor.afterRemove(key, cacheLevel));
+    public void afterRemove(String key, StoreType storeType) {
+        cacheMonitors.forEach(monitor -> monitor.afterRemove(key, storeType));
     }
 
     @Override
-    public void afterRemoveAll(Set<? extends K> keys, CacheLevel cacheLevel) {
-        cacheMonitors.forEach(monitor -> monitor.afterRemoveAll(keys, cacheLevel));
+    public void afterRemoveAll(Set<String> keys, StoreType storeType) {
+        cacheMonitors.forEach(monitor -> monitor.afterRemoveAll(keys, storeType));
     }
 
     @Override
-    public void afterClear(CacheLevel cacheLevel) {
-        cacheMonitors.forEach(m -> m.afterClear(cacheLevel));
+    public void afterClear(StoreType storeType) {
+        cacheMonitors.forEach(m -> m.afterClear(storeType));
     }
 
 }

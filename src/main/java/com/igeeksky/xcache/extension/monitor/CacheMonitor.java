@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.extension.monitor;
 
 
-import com.igeeksky.xcache.common.CacheLevel;
 import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.StoreType;
 
 import java.util.Map;
 import java.util.Set;
@@ -11,27 +11,27 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-06
  */
-public interface CacheMonitor<K, V> {
+public interface CacheMonitor<V> {
 
-    default void afterGet(K key, CacheValue<V> cacheValue, CacheLevel cacheLevel) {
+    default void afterGet(String key, CacheValue<V> cacheValue, StoreType storeType) {
     }
 
-    default void afterPut(K key, V value, CacheLevel cacheLevel) {
+    default void afterPut(String key, V value, StoreType storeType) {
     }
 
-    default void afterPutAll(Map<? extends K, ? extends V> keyValues, CacheLevel cacheLevel) {
+    default void afterPutAll(Map<String, ? extends V> keyValues, StoreType storeType) {
     }
 
-    default void afterLoad(K key, V value) {
+    default void afterLoad(String key, V value) {
     }
 
-    default void afterRemove(K key, CacheLevel cacheLevel) {
+    default void afterRemove(String key, StoreType storeType) {
     }
 
-    default void afterRemoveAll(Set<? extends K> keys, CacheLevel cacheLevel) {
+    default void afterRemoveAll(Set<String> keys, StoreType storeType) {
     }
 
-    default void afterClear(CacheLevel cacheLevel) {
+    default void afterClear(StoreType storeType) {
     }
 
 }

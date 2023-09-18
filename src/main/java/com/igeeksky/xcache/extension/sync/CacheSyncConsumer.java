@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.extension.sync;
 
-import com.igeeksky.xcache.ReactiveCache;
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.serializer.Serializer;
+import com.igeeksky.xcache.store.LocalCacheStore;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 
 import java.util.Objects;
@@ -15,36 +15,36 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class CacheSyncConsumer<K, V> implements CacheMessageConsumer {
+public class CacheSyncConsumer implements CacheMessageConsumer {
 
     private final String sid;
 
-    private final ReactiveCache<K, V> localCache;
+    private final LocalCacheStore localStore;
 
-    private final Serializer<CacheSyncMessage<K>> serializer;
+    private final Serializer<CacheSyncMessage> serializer;
 
-    public CacheSyncConsumer(String sid, ReactiveCache<K, V> localCache, Serializer<CacheSyncMessage<K>> serializer) {
+    public CacheSyncConsumer(String sid, LocalCacheStore localStore, Serializer<CacheSyncMessage> serializer) {
         this.sid = sid;
-        this.localCache = localCache;
+        this.localStore = localStore;
         this.serializer = serializer;
     }
 
     public void onMessage(byte[] source) {
-        CacheSyncMessage<K> message = serializer.deserialize(source);
+        CacheSyncMessage message = serializer.deserialize(source);
         String sourceId = message.getSid();
         if (Objects.equals(sid, sourceId)) {
             return;
         }
         int type = message.getType();
         if (Objects.equals(CacheSyncMessage.TYPE_REMOVE, type)) {
-            Set<? extends K> keys = message.getKeys();
+            Set<String> keys = message.getKeys();
             if (CollectionUtils.isNotEmpty(keys)) {
-                localCache.removeAll(keys).subscribe();
+                localStore.removeAll(keys).subscribe();
             }
             return;
         }
         if (Objects.equals(CacheSyncMessage.TYPE_CLEAR, type)) {
-            localCache.clear().subscribe();
+            localStore.clear().subscribe();
         }
     }
 

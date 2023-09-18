@@ -2,36 +2,27 @@ package com.igeeksky.xcache.support.lettuce;
 
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.sync.CacheMessagePublisher;
-import com.igeeksky.xcache.extension.sync.CacheSyncConsumer;
 import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
-import io.lettuce.core.AbstractRedisClient;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
-public class LettuceCacheSyncProvider implements CacheSyncProvider {
+public class LettuceCacheSyncProvider implements CacheSyncProvider, AutoCloseable {
+
+    private final LettuceCacheMessagePublisher publisher;
 
     private final LettuceCacheMessageListener listener;
 
     private final StatefulRedisPubSubConnection<String, byte[]> pubSubConnection;
 
-    private final CacheMessagePublisher publisher;
-
-    public LettuceCacheSyncProvider(LettuceCacheSyncConfig config) {
-        this.listener = config.getListener();
-        ComposedRedisCodec redisCodec = ComposedRedisCodec.getInstance(config.getCharset());
-        AbstractRedisClient redisClient = config.getRedisClient();
-        if (redisClient instanceof RedisClient) {
-            pubSubConnection = ((RedisClient) redisClient).connectPubSub(redisCodec);
-        } else {
-            pubSubConnection = ((RedisClusterClient) redisClient).connectPubSub(redisCodec);
-        }
-        pubSubConnection.addListener(listener);
-        this.publisher = new LettuceCacheMessagePublisher(pubSubConnection);
+    public LettuceCacheSyncProvider(LettuceConnectionManager connectionManager) {
+        this.listener = new LettuceCacheMessageListener();
+        pubSubConnection = connectionManager.getPubSubConnection();
+        pubSubConnection.addListener(this.listener);
+        this.publisher = new LettuceCacheMessagePublisher(pubSubConnection.reactive());
     }
 
     @Override
@@ -45,16 +36,23 @@ public class LettuceCacheSyncProvider implements CacheSyncProvider {
         listener.register(channel, consumer);
     }
 
-    private static class LettuceCacheMessagePublisher implements CacheMessagePublisher {
-        private final StatefulRedisPubSubConnection<String, byte[]> pubSubConnection;
+    @Override
+    public void close() {
+        if (this.pubSubConnection != null && this.pubSubConnection.isOpen()) {
+            this.pubSubConnection.close();
+        }
+    }
 
-        public LettuceCacheMessagePublisher(StatefulRedisPubSubConnection<String, byte[]> pubSubConnection) {
-            this.pubSubConnection = pubSubConnection;
+    private static class LettuceCacheMessagePublisher implements CacheMessagePublisher {
+        private final RedisPubSubReactiveCommands<String, byte[]> pubSubReactiveCommands;
+
+        public LettuceCacheMessagePublisher(RedisPubSubReactiveCommands<String, byte[]> pubSubReactiveCommands) {
+            this.pubSubReactiveCommands = pubSubReactiveCommands;
         }
 
         @Override
         public void publish(String channel, byte[] message) {
-            pubSubConnection.reactive().publish(channel, message).subscribe();
+            pubSubReactiveCommands.publish(channel, message).subscribe();
         }
     }
 

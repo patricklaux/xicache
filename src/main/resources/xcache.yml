@@ -1,35 +1,45 @@
 xcache:
-  t1:
+  t0:
     name: global
     charset: UTF-8
-    application: shop
     cache-type: both
-    first:
-      cache-store: caffeineCacheStore
-      store-type:
+    application: shop
+    key-convertor: jacksonKeyConvertorProvider
+    local:
+      cache-store: caffeineCacheStoreProvider
+      store-name: caffeine
+      initial-size: 128
+      maximum-size: 1024
+      maximumWeight: 1024
+      keyStrength: weak
+      valueStrength: soft
+      expire-after-write: 3600
       expire-after-access: 3600
-      expire-after-write: 3600
-      maximum-size: 4000000
-      key-convertor:
-      value-serializer: jacksonSerializerProvider
+      enable-random-ttl: true
+      enable-null-value: true
+      enable-compress-value: false
+      enable-serialize-value: false
       value-compressor: gzipCompressorProvider
-    second:
-      cache-store: lettuceCacheStore
-      store-type: redis-string
+      value-serializer: jacksonSerializerProvider
+    remote:
+      cache-store: lettuceCacheStoreProvider
+      store-name: redis-string
+      expire-after-write: 3600
       enable-key-prefix: true
-      expire-after-write: 3600
-      key-serializer: stringSerializerProvider
-      value-serializer: jacksonSerializerProvider
+      enable-random-ttl: true
+      enable-null-value: true
+      enable-compress-value: false
       value-compressor: gzipCompressorProvider
+      value-serializer: jacksonSerializerProvider
     extension:
-      cache-lock: ''
+      cache-lock: localCacheLockProvider
       cache-lock-size: 512
-      cache-stat: ''
-      cache-sync: ''
-      cache-loader: ''
-      cache-writer: ''
-      cache-monitors: ''
-      contains-predicate: ''
+      cache-stat:
+      cache-stat-interval: 10
+      cache-sync: lettuceCacheSyncProvider
+      cache-loader:
+      cache-monitors:
+      contains-predicate:
     metadata:
   caches:
     - name: user

@@ -1,10 +1,10 @@
 package com.igeeksky.xcache;
 
 
-import com.igeeksky.xcache.common.CacheLevel;
 import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.KeyValue;
+import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProxy;
 import reactor.core.publisher.Flux;
@@ -21,7 +21,7 @@ import java.util.Set;
  */
 public class NoOpCache<K, V> extends AbstractCache<K, V> {
 
-    private final CacheMonitorProxy<K, V> cacheMonitor = new CacheMonitorProxy<>();
+    private final CacheMonitorProxy<V> cacheMonitor = new CacheMonitorProxy<>();
 
     public NoOpCache(CacheConfig<K, V> config) {
         super(config);
@@ -29,52 +29,50 @@ public class NoOpCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected Mono<CacheValue<V>> doGet(K key) {
-        return Mono.fromSupplier(() -> {
-            cacheMonitor.afterGet(key, null, CacheLevel.L1);
-            return null;
-        });
+    protected Mono<CacheValue<V>> doGet(String key) {
+        return Mono.just(key)
+                .doOnSuccess(k -> cacheMonitor.afterGet(k, null, StoreType.NONE))
+                .flatMap(k -> Mono.empty());
     }
 
+
     @Override
-    protected Mono<CacheValue<V>> doGet(K key, CacheLoader<K, V> cacheLoader) {
+    protected Mono<CacheValue<V>> doGet(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
         return cacheLoader.load(key)
-                .doOnSuccess(value -> cacheMonitor.afterLoad(key, value))
+                .doOnSuccess(value -> cacheMonitor.afterLoad(storeKey, value))
                 .map(CacheValue::new);
     }
 
     @Override
-    protected Flux<KeyValue<K, CacheValue<V>>> doGetAll(Set<? extends K> keys) {
+    protected Flux<KeyValue<String, CacheValue<V>>> doGetAll(Set<String> keys) {
         return Flux.fromIterable(keys)
-                .doOnNext(k -> cacheMonitor.afterGet(k, null, CacheLevel.L1))
+                .doOnNext(k -> cacheMonitor.afterGet(k, null, StoreType.NONE))
                 .flatMap(k -> Flux.empty());
     }
 
     @Override
-    protected Mono<Void> doPut(K key, V value) {
-        return Mono.just(key)
-                .doOnSuccess(k -> cacheMonitor.afterPut(k, value, CacheLevel.L1))
-                .flatMap(k -> Mono.empty());
+    protected Mono<Void> doPut(String key, V value) {
+        return Mono.just(key).doOnSuccess(k -> cacheMonitor.afterPut(k, value, StoreType.NONE)).then();
     }
 
     @Override
-    protected Mono<Void> doPutAll(Map<? extends K, ? extends V> keyValues) {
-        return Mono.empty();
+    protected Mono<Void> doPutAll(Map<String, ? extends V> keyValues) {
+        return Mono.just(keyValues).doOnSuccess(kvs -> cacheMonitor.afterPutAll(kvs, StoreType.NONE)).then();
     }
 
     @Override
-    protected Mono<Void> doRemove(K key) {
-        return Mono.empty();
+    protected Mono<Void> doRemove(String key) {
+        return Mono.just(key).doOnSuccess(k -> cacheMonitor.afterRemove(k, StoreType.NONE)).then();
     }
 
     @Override
-    protected Mono<Void> doRemoveAll(Set<? extends K> keys) {
-        return Mono.empty();
+    protected Mono<Void> doRemoveAll(Set<String> keys) {
+        return Mono.just(keys).doOnSuccess(ks -> cacheMonitor.afterRemoveAll(ks, StoreType.NONE)).then();
     }
 
     @Override
     public Mono<Void> clear() {
-        return Mono.empty();
+        return Mono.empty().doOnSuccess(vod -> cacheMonitor.afterClear(StoreType.NONE)).then();
     }
 
 }

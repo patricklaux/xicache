@@ -1,9 +1,7 @@
 package com.igeeksky.xcache.common;
 
-import com.igeeksky.xcache.extension.serializer.Serializer;
+import com.igeeksky.xcache.extension.serializer.StringSerializer;
 import com.igeeksky.xtool.core.lang.ArrayUtils;
-import com.igeeksky.xtool.core.lang.StringUtils;
-
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -14,28 +12,21 @@ import java.util.Arrays;
  * @author Patrick.Lau
  * @since 0.0.3 2021-08-20
  */
-public class CacheKeyPrefix<K> {
+public class CacheKeyPrefix {
+
+    private final Charset charset;
 
     private final String keyPrefix;
+
     private final byte[] keyPrefixBytes;
-    private final Charset charset;
-    private final Serializer<K> serializer;
 
-    public CacheKeyPrefix(Serializer<K> serializer, Charset charset, String namespace, String name) {
-        this.serializer = serializer;
+    private final StringSerializer serializer;
+
+    public CacheKeyPrefix(String name, Charset charset, StringSerializer serializer) {
         this.charset = charset;
-        this.keyPrefix = createKeyPrefix(namespace, name);
-        this.keyPrefixBytes = this.keyPrefix.getBytes(charset);
-    }
-
-    @NotNull
-    private String createKeyPrefix(String namespace, String name) {
-        String SEPARATOR = "::";
-        namespace = StringUtils.trim(namespace);
-        if (null == namespace) {
-            return name + SEPARATOR;
-        }
-        return namespace + SEPARATOR + name + SEPARATOR;
+        this.keyPrefix = name + "::";
+        this.serializer = serializer;
+        this.keyPrefixBytes = serializer.serialize(keyPrefix);
     }
 
     public String getKeyPrefix() {
@@ -43,23 +34,23 @@ public class CacheKeyPrefix<K> {
     }
 
     public byte[] createHashKey(int index) {
-        return (keyPrefix + index).getBytes(charset);
+        return serializer.serialize(keyPrefix + index);
     }
 
-    public String concatPrefix(K key) {
-        return keyPrefix + new String(serializer.serialize(key), charset);
+    public String concatPrefix(String key) {
+        return keyPrefix + key;
     }
 
-    public byte[] concatPrefixBytes(K key) {
-        return ArrayUtils.concat(keyPrefixBytes, serializer.serialize(key));
+    public byte[] concatPrefixBytes(String key) {
+        return ArrayUtils.concat(keyPrefixBytes, key.getBytes(charset));
     }
 
-    public K removePrefix(String keyWithPrefix) {
+    public String removePrefix(String keyWithPrefix) {
         byte[] keyWithPrefixBytes = keyWithPrefix.getBytes(charset);
         return removePrefix(keyWithPrefixBytes);
     }
 
-    public K removePrefix(byte[] keyWithPrefixBytes) {
+    public String removePrefix(byte[] keyWithPrefixBytes) {
         byte[] keyBytes = Arrays.copyOfRange(keyWithPrefixBytes, keyPrefixBytes.length, keyWithPrefixBytes.length);
         return serializer.deserialize(keyBytes);
     }

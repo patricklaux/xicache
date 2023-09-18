@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.extension.statistic;
 
-import com.igeeksky.xcache.common.CacheLevel;
+import com.igeeksky.xcache.common.StoreType;
 
 /**
  * @author Patrick.Lau
@@ -8,7 +8,7 @@ import com.igeeksky.xcache.common.CacheLevel;
  */
 public class CacheStatMessage {
 
-    public CacheStatMessage(String name, String application, CacheLevel cacheLevel, CacheStatCounter counter) {
+    public CacheStatMessage(String name, String application, StoreType storeType, CacheStatCounter counter) {
 
     }
 }

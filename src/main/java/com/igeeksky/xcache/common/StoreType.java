@@ -6,6 +6,6 @@ package com.igeeksky.xcache.common;
  */
 public enum StoreType {
 
-    LOCAL, REMOTE
+    NONE, LOCAL, REMOTE
 
 }
