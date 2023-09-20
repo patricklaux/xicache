@@ -6,6 +6,19 @@ package com.igeeksky.xcache.common;
  */
 public enum StoreType {
 
-    NONE, LOCAL, REMOTE
+    /**
+     * 无缓存(空操作)
+     */
+    NOOP,
+
+    /**
+     * 本地缓存
+     */
+    LOCAL,
+
+    /**
+     * 远程缓存
+     */
+    REMOTE
 
 }

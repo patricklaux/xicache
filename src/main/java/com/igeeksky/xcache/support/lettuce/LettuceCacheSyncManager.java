@@ -2,7 +2,7 @@ package com.igeeksky.xcache.support.lettuce;
 
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.sync.CacheMessagePublisher;
-import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
+import com.igeeksky.xcache.extension.sync.CacheSyncManager;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 
@@ -10,7 +10,7 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
-public class LettuceCacheSyncProvider implements CacheSyncProvider, AutoCloseable {
+public class LettuceCacheSyncManager implements CacheSyncManager {
 
     private final LettuceCacheMessagePublisher publisher;
 
@@ -18,7 +18,7 @@ public class LettuceCacheSyncProvider implements CacheSyncProvider, AutoCloseabl
 
     private final StatefulRedisPubSubConnection<String, byte[]> pubSubConnection;
 
-    public LettuceCacheSyncProvider(LettuceConnectionManager connectionManager) {
+    public LettuceCacheSyncManager(LettuceConnectionManager connectionManager) {
         this.listener = new LettuceCacheMessageListener();
         pubSubConnection = connectionManager.getPubSubConnection();
         pubSubConnection.addListener(this.listener);
@@ -32,7 +32,7 @@ public class LettuceCacheSyncProvider implements CacheSyncProvider, AutoCloseabl
     }
 
     @Override
-    public <K, V> void register(String channel, CacheMessageConsumer consumer) {
+    public void register(String channel, CacheMessageConsumer consumer) {
         listener.register(channel, consumer);
     }
 

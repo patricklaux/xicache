@@ -49,7 +49,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected Mono<CacheValue<V>> doGet(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
+    protected Mono<CacheValue<V>> doLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
         return cacheLoader.load(key)
                 .doOnSuccess(value -> this.doPut(storeKey, value))
                 .doOnSuccess(value -> cacheMonitor.afterLoad(storeKey, value))

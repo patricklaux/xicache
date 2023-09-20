@@ -1,8 +1,10 @@
 package com.igeeksky.xcache.config;
 
+import com.igeeksky.xcache.extension.contains.AlwaysTrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
 import com.igeeksky.xcache.extension.lock.CacheLock;
+import com.igeeksky.xcache.extension.lock.LocalCacheLock;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 
 import java.nio.charset.Charset;
@@ -22,7 +24,10 @@ public class CacheConfig<K, V> {
     private String name;
 
     // both
-    private Charset charset = StandardCharsets.UTF_8;
+    private String application;
+
+    // both
+    private Charset charset;
 
     // both
     private Class<K> keyType;
@@ -71,6 +76,14 @@ public class CacheConfig<K, V> {
         this.charset = charset;
     }
 
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
+    }
+
     public Class<K> getKeyType() {
         return keyType;
     }
@@ -88,7 +101,10 @@ public class CacheConfig<K, V> {
     }
 
     public CacheLock<K> getCacheLock() {
-        return cacheLock;
+        if (cacheLock != null) {
+            return cacheLock;
+        }
+        return new LocalCacheLock<>();
     }
 
     public void setCacheLock(CacheLock<K> cacheLock) {
@@ -104,7 +120,10 @@ public class CacheConfig<K, V> {
     }
 
     public ContainsPredicate<K> getContainsPredicate() {
-        return containsPredicate;
+        if (containsPredicate != null) {
+            return containsPredicate;
+        }
+        return AlwaysTrueContainsPredicate.getINSTANCE();
     }
 
     public void setContainsPredicate(ContainsPredicate<K> containsPredicate) {

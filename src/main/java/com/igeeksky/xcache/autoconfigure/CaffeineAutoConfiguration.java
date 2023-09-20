@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.autoconfigure;
 
-import com.igeeksky.xcache.MultiLevelCacheManager;
+import com.igeeksky.xcache.XcacheManager;
 
 /**
  * @author Patrick.Lau
@@ -8,7 +8,7 @@ import com.igeeksky.xcache.MultiLevelCacheManager;
  */
 public class CaffeineAutoConfiguration {
 
-    private MultiLevelCacheManager multiLevelCacheManager;
+    private XcacheManager xcacheManager;
 
     /*
      TODO

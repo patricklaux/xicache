@@ -19,4 +19,9 @@ public class StringSerializerProvider implements SerializerProvider {
         }
         throw new CacheConfigException("type must be String.class. " + type);
     }
+
+    @Override
+    public void close() {
+        // do nothing
+    }
 }

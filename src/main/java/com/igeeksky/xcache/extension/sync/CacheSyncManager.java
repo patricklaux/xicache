@@ -7,10 +7,10 @@ import com.igeeksky.xcache.extension.CacheMessageConsumer;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */
-public interface CacheSyncProvider extends Provider {
+public interface CacheSyncManager extends Provider {
 
     CacheMessagePublisher getPublisher(String channel);
 
-    <K, V> void register(String channel, CacheMessageConsumer consumer);
+    void register(String channel, CacheMessageConsumer consumer);
 
 }

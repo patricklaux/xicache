@@ -16,4 +16,8 @@ public class JacksonKeyConvertorProvider implements KeyConvertorProvider {
         return JacksonKeyConvertor.getInstance();
     }
 
+    @Override
+    public void close() {
+        // do nothing
+    }
 }

@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension;
+package com.igeeksky.xcache.extension.compress;
 
 /**
  * @author Patrick.Lau

@@ -2,7 +2,7 @@ package com.igeeksky.xcache;
 
 import com.igeeksky.xcache.common.*;
 import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.extension.Compressor;
+import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
 import com.igeeksky.xcache.extension.lock.CacheLock;
@@ -87,22 +87,22 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     @Override
     public Mono<CacheValue<V>> get(K key, CacheLoader<K, V> cacheLoader) {
-        return this.get(key).switchIfEmpty(loadWithLock(key, cacheLoader));
+        return this.get(key).switchIfEmpty(load(key, cacheLoader));
     }
 
-    private Mono<CacheValue<V>> loadWithLock(K key, CacheLoader<K, V> cacheLoader) {
+    private Mono<CacheValue<V>> load(K key, CacheLoader<K, V> cacheLoader) {
         if (containsPredicate.test(getName(), key)) {
             Lock keyLock = cacheLock.get(key);
             return Mono.just(key)
                     .doOnNext(k -> keyLock.lock())
                     .flatMap(this::get)
-                    .switchIfEmpty(this.doGet(key, toStoreKey(key), cacheLoader))
+                    .switchIfEmpty(this.doLoad(key, toStoreKey(key), cacheLoader))
                     .doFinally(s -> keyLock.unlock());
         }
         return Mono.empty();
     }
 
-    protected abstract Mono<CacheValue<V>> doGet(K key, String storeKey, CacheLoader<K, V> cacheLoader);
+    protected abstract Mono<CacheValue<V>> doLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader);
 
     @Override
     public Flux<KeyValue<K, CacheValue<V>>> getAll(Set<? extends K> keys) {

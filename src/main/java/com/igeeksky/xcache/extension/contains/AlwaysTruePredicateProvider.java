@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.extension.contains;
 
-import com.igeeksky.xcache.config.CacheProps;
+import com.igeeksky.xcache.config.props.CacheProps;
 
 /**
  * 无操作类工厂，test方法始终返回true
@@ -15,4 +15,8 @@ public class AlwaysTruePredicateProvider implements ContainsPredicateProvider {
         return AlwaysTrueContainsPredicate.getINSTANCE();
     }
 
+    @Override
+    public void close() {
+        // do nothing
+    }
 }

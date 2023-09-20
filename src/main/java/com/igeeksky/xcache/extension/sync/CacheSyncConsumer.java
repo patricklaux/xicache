@@ -19,13 +19,13 @@ public class CacheSyncConsumer implements CacheMessageConsumer {
 
     private final String sid;
 
-    private final LocalCacheStore localStore;
+    private final LocalCacheStore localCacheStore;
 
     private final Serializer<CacheSyncMessage> serializer;
 
-    public CacheSyncConsumer(String sid, LocalCacheStore localStore, Serializer<CacheSyncMessage> serializer) {
+    public CacheSyncConsumer(String sid, LocalCacheStore localCacheStore, Serializer<CacheSyncMessage> serializer) {
         this.sid = sid;
-        this.localStore = localStore;
+        this.localCacheStore = localCacheStore;
         this.serializer = serializer;
     }
 
@@ -39,12 +39,12 @@ public class CacheSyncConsumer implements CacheMessageConsumer {
         if (Objects.equals(CacheSyncMessage.TYPE_REMOVE, type)) {
             Set<String> keys = message.getKeys();
             if (CollectionUtils.isNotEmpty(keys)) {
-                localStore.removeAll(keys).subscribe();
+                localCacheStore.removeAll(keys).subscribe();
             }
             return;
         }
         if (Objects.equals(CacheSyncMessage.TYPE_CLEAR, type)) {
-            localStore.clear().subscribe();
+            localCacheStore.clear().subscribe();
         }
     }
 

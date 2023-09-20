@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.config;
 
-import com.igeeksky.xcache.extension.Compressor;
-import com.igeeksky.xcache.extension.lock.CacheLock;
+import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.serializer.Serializer;
 
 /**

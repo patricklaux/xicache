@@ -1,10 +1,10 @@
-package com.igeeksky.xcache.config;
+package com.igeeksky.xcache.config.props;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
-public enum CacheTemplate {
+public enum CachePropsTemplateId {
 
     T0,
     T1,

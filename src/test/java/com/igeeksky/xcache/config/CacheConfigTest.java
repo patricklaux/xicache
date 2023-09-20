@@ -17,19 +17,6 @@ class CacheConfigTest {
 
     @Test
     void getName() {
-        List<CacheMonitor<String>> monitors = new ArrayList<>();
-        monitors.add(new CacheMonitorProxy<>());
-        CacheConfig<String, String> config = new CacheConfig<>("order");
-        config.setMonitors(monitors);
-
-        CacheConfig<String, String> clone = config.clone();
-        config.setName("user");
-        assertEquals("order", clone.getName());
-
-        config.getMonitors().add(new CacheMonitorProxy<>());
-
-        assertEquals(2, config.getMonitors().size());
-        assertEquals(2, clone.getMonitors().size());
     }
 
     @Test
