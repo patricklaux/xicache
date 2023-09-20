@@ -15,7 +15,7 @@ public class LocalConfig<K, V> {
     private String storeName;
 
     // Local
-    private int initialSize;
+    private int initialCapacity;
 
     // Local
     private long maximumSize;
@@ -61,12 +61,12 @@ public class LocalConfig<K, V> {
         this.storeName = storeName;
     }
 
-    public int getInitialSize() {
-        return initialSize;
+    public int getInitialCapacity() {
+        return initialCapacity;
     }
 
-    public void setInitialSize(int initialSize) {
-        this.initialSize = initialSize;
+    public void setInitialCapacity(int initialCapacity) {
+        this.initialCapacity = initialCapacity;
     }
 
     public long getMaximumSize() {

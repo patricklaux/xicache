@@ -9,39 +9,23 @@ import com.igeeksky.xcache.config.CacheConstants;
 public class LocalProps {
 
     private String cacheStore;
-
-    private String storeType;
-
-    private Long expireAfterAccess;
-
-    private Long expireAfterWrite;
-
+    private String storeName;
+    private Integer initialCapacity;
     private Long maximumSize;
-
+    private Long maximumWeight;
+    private String keyStrength;
+    private String valueStrength;
+    private Long expireAfterWrite;
+    private Long expireAfterAccess;
     private String compressor;
-
     private String keyConvertor;
-
-    private String keySerializer;
-
     private String valueSerializer;
-
     private String valueCompressor;
-
+    private Boolean enableRandomTtl;
     private Boolean enableKeyPrefix;
-
     private Boolean enableNullValue;
-
     private Boolean enableCompressValue;
-
     private Boolean enableSerializeValue;
-
-    public static LocalProps createDefault() {
-        LocalProps localProps = new LocalProps();
-        localProps.setCacheStore(CacheConstants.LOCAL_CACHE_STORE);
-        // TODO 完善本地缓存默认配置
-        return localProps;
-    }
 
     public String getCacheStore() {
         return cacheStore;
@@ -51,20 +35,52 @@ public class LocalProps {
         this.cacheStore = cacheStore;
     }
 
-    public String getStoreType() {
-        return storeType;
+    public String getStoreName() {
+        return storeName;
     }
 
-    public void setStoreType(String storeType) {
-        this.storeType = storeType;
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
     }
 
-    public Long getExpireAfterAccess() {
-        return expireAfterAccess;
+    public Integer getInitialCapacity() {
+        return initialCapacity;
     }
 
-    public void setExpireAfterAccess(Long expireAfterAccess) {
-        this.expireAfterAccess = expireAfterAccess;
+    public void setInitialCapacity(Integer initialCapacity) {
+        this.initialCapacity = initialCapacity;
+    }
+
+    public Long getMaximumSize() {
+        return maximumSize;
+    }
+
+    public void setMaximumSize(Long maximumSize) {
+        this.maximumSize = maximumSize;
+    }
+
+    public Long getMaximumWeight() {
+        return maximumWeight;
+    }
+
+    public void setMaximumWeight(Long maximumWeight) {
+        this.maximumWeight = maximumWeight;
+    }
+
+    public String getKeyStrength() {
+        return keyStrength;
+    }
+
+    public void setKeyStrength(String keyStrength) {
+        this.keyStrength = keyStrength;
+    }
+
+    public String getValueStrength() {
+        return valueStrength;
+    }
+
+    public void setValueStrength(String valueStrength) {
+        this.valueStrength = valueStrength;
     }
 
     public Long getExpireAfterWrite() {
@@ -75,12 +91,12 @@ public class LocalProps {
         this.expireAfterWrite = expireAfterWrite;
     }
 
-    public Long getMaximumSize() {
-        return maximumSize;
+    public Long getExpireAfterAccess() {
+        return expireAfterAccess;
     }
 
-    public void setMaximumSize(Long maximumSize) {
-        this.maximumSize = maximumSize;
+    public void setExpireAfterAccess(Long expireAfterAccess) {
+        this.expireAfterAccess = expireAfterAccess;
     }
 
     public String getCompressor() {
@@ -99,14 +115,6 @@ public class LocalProps {
         this.keyConvertor = keyConvertor;
     }
 
-    public String getKeySerializer() {
-        return keySerializer;
-    }
-
-    public void setKeySerializer(String keySerializer) {
-        this.keySerializer = keySerializer;
-    }
-
     public String getValueSerializer() {
         return valueSerializer;
     }
@@ -121,6 +129,14 @@ public class LocalProps {
 
     public void setValueCompressor(String valueCompressor) {
         this.valueCompressor = valueCompressor;
+    }
+
+    public Boolean getEnableRandomTtl() {
+        return enableRandomTtl;
+    }
+
+    public void setEnableRandomTtl(Boolean enableRandomTtl) {
+        this.enableRandomTtl = enableRandomTtl;
     }
 
     public Boolean getEnableKeyPrefix() {

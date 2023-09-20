@@ -8,7 +8,7 @@ import java.util.Collection;
  */
 public interface CacheManager {
 
-    <K, V> Cache<K, V> get(String name, Class<K> keyType, Class<V> valueType);
+    <K, V> Cache<K, V> getOrCreateCache(String name, Class<K> keyType, Class<V> valueType);
 
     Collection<Cache<?, ?>> getAll();
 

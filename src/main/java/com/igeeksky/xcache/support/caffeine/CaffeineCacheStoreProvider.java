@@ -48,7 +48,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
 
         // 1.2. 基于随机时间的驱逐策略
         if (enableRandomTtl) {
-            if (expireAfterWrite <= 0) {
+            if (expireAfterWrite <= 0L) {
                 throw new CacheConfigException("enableRandomTtl: expireAfterWrite must be greater than 0");
             }
             Duration durationWrite = Duration.ofMillis(expireAfterWrite);
@@ -71,7 +71,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
 
     private <K, V> LocalCacheStore createCaffeineStore(CacheConfig<K, V> config, Caffeine<Object, Object> builder) {
         // 2. 设置初始化缓存容量
-        int initialCapacity = config.getLocalConfig().getInitialSize();
+        int initialCapacity = config.getLocalConfig().getInitialCapacity();
         if (initialCapacity > 0) {
             builder.initialCapacity(initialCapacity);
         }

@@ -30,6 +30,7 @@ class CaffeineCacheStoreTest {
         Hooks.onOperatorDebug();
         Cache<String, CacheValue<Object>> caffeine = Caffeine.newBuilder()
                 .expireAfterWrite(3, TimeUnit.SECONDS)
+                .initialCapacity(128)
                 .maximumSize(1024)
                 .build();
         cache = new CaffeineCacheStore<>(caffeine);

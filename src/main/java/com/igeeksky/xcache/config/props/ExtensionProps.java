@@ -1,7 +1,5 @@
 package com.igeeksky.xcache.config.props;
 
-import com.igeeksky.xcache.config.CacheConstants;
-
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
@@ -15,13 +13,6 @@ public class ExtensionProps {
     private String cacheStat;
     private String cacheStatChannel;
     private String cacheMonitors;
-
-    public static ExtensionProps createDefault() {
-        ExtensionProps extensionProps = new ExtensionProps();
-        extensionProps.setCacheLock(CacheConstants.EXTENSION_CACHE_LOCK);
-        // TODO 完善扩展配置默认值
-        return extensionProps;
-    }
 
     public String getCacheLock() {
         return cacheLock;

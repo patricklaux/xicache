@@ -4,9 +4,9 @@ import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.config.CacheConfigException;
 import com.igeeksky.xcache.config.props.CacheProps;
-import com.igeeksky.xcache.config.props.CachePropsTemplateId;
-import com.igeeksky.xcache.config.props.CachePropsUtil;
+import com.igeeksky.xcache.config.CacheConfigUtil;
 import com.igeeksky.xcache.config.props.LocalProps;
+import com.igeeksky.xcache.config.props.TemplateId;
 import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.contains.AlwaysTrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
@@ -30,10 +30,7 @@ import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -51,7 +48,7 @@ public class XcacheManager implements CacheManager {
 
     private final ConcurrentMap<String, CacheProps> cachePropsMap = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<CachePropsTemplateId, CacheProps> cacheTemplateMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TemplateId, CacheProps> templateMap = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, CacheLockProvider> lockProviderMap = new ConcurrentHashMap<>();
 
@@ -69,21 +66,20 @@ public class XcacheManager implements CacheManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <K, V> Cache<K, V> get(String name, Class<K> keyType, Class<V> valueType) {
-        return (Cache<K, V>) cacheMap.computeIfAbsent(name, k -> createCache(k, keyType, valueType));
+    public <K, V> Cache<K, V> getOrCreateCache(String name, Class<K> keyType, Class<V> valueType) {
+        String cacheName = StringUtils.trim(name);
+        if (!StringUtils.hasLength(cacheName)) {
+            throw new CacheConfigException("cacheName must not be null or empty");
+        }
+        return (Cache<K, V>) cacheMap.computeIfAbsent(cacheName, k -> createCache(k, keyType, valueType));
     }
 
-    public <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType) {
+    private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType) {
         // 1. 获取配置
-        CacheProps cacheProps = this.getCacheProps(name);
-        String application = StringUtils.trim(cacheProps.getApplication());
+        CacheProps cacheProps = this.getOrCreateCacheProps(name);
 
         // 2. 创建 CacheConfig
-        CacheConfig<K, V> cacheConfig = new CacheConfig<>(name);
-        cacheConfig.setKeyType(keyType);
-        cacheConfig.setValueType(valueType);
-        cacheConfig.setCharset(this.getCharset(cacheProps.getCharset()));
-        cacheConfig.setApplication(application);
+        CacheConfig<K, V> cacheConfig = CacheConfigUtil.createConfig(cacheProps, keyType, valueType);
 
         // 3. 设置 ContainsPredicate
         cacheConfig.setContainsPredicate(this.getContainsPredicate(keyType, cacheProps));
@@ -96,7 +92,7 @@ public class XcacheManager implements CacheManager {
         cacheConfig.setMonitors(monitors);
 
         // 6. 添加缓存统计类
-        CacheStatMonitor<V> statMonitor = new CacheStatMonitor<>(name, application);
+        CacheStatMonitor<V> statMonitor = new CacheStatMonitor<>(name, cacheConfig.getApplication());
         monitors.add(statMonitor);
         CacheStatManager statManager = getCacheStatManager(cacheProps);
         statManager.register(name, statMonitor);
@@ -133,7 +129,7 @@ public class XcacheManager implements CacheManager {
             LocalProps local = cacheProps.getLocal();
             String beanId = local.getCacheStore();
             LocalCacheStoreProvider localStoreProvider = localStoreProviderMap.get(beanId);
-            // 构建配置
+            // 构建本地缓存配置
 
             // 获取缓存
             LocalCacheStore localCacheStore = localStoreProvider.getLocalCacheStore(cacheConfig);
@@ -163,21 +159,23 @@ public class XcacheManager implements CacheManager {
     }
 
     private Compressor getRemoteCompressor(CacheProps cacheProps) {
-
+        return null;
     }
 
     private <V> Serializer<V> getRemoteSerializer(CacheProps cacheProps) {
-
+        return null;
     }
 
     private <V> Serializer<V> getLocalSerializer(CacheProps cacheProps) {
+        return null;
     }
 
     private KeyConvertor getKeyConvertor(CacheProps cacheProps) {
-
+        return null;
     }
 
     private Compressor getLocalCompressor(CacheProps cacheProps) {
+        return null;
     }
 
     private void registerSyncConsumer(CacheSyncManager syncManager, LocalCacheStore localCacheStore, Serializer<CacheSyncMessage> syncSerializer, String channel) {
@@ -206,11 +204,11 @@ public class XcacheManager implements CacheManager {
     }
 
     private Serializer<CacheSyncMessage> getSyncMessageSerializer(CacheProps cacheProps) {
-
+        return null;
     }
 
     private CacheSyncManager getCacheSyncManager(CacheProps cacheProps) {
-
+        return null;
     }
 
     private CacheStatManager getCacheStatManager(CacheProps cacheProps) {
@@ -296,40 +294,39 @@ public class XcacheManager implements CacheManager {
      * @param name 缓存名称
      * @return {@link CacheProps} 缓存配置
      */
-    private CacheProps getCacheProps(String name) {
+    private CacheProps getOrCreateCacheProps(String name) {
+        // 用户配置
         CacheProps userProps = cachePropsMap.get(name);
-
         if (userProps == null) {
             userProps = new CacheProps(name);
         }
 
-        CachePropsTemplateId templateId = CachePropsTemplateId.T0;
+        TemplateId templateId = TemplateId.T0;
         String templateStr = StringUtils.toUpperCase(userProps.getTemplate());
         if (StringUtils.hasLength(templateStr)) {
-            templateId = CachePropsTemplateId.valueOf(templateStr);
-        } else {
-            userProps.setTemplate(templateId.name());
+            templateId = TemplateId.valueOf(templateStr);
         }
+        userProps.setTemplate(templateId.name());
 
-        CacheProps template = cacheTemplateMap.get(templateId);
+        // 模板配置
+        CacheProps template = templateMap.get(templateId);
         if (template == null) {
-            String msg = String.format("CacheTemplateProps: [%s] doesn't exist.", templateId);
-            throw new CacheConfigException(msg);
+            throw new CacheConfigException("CacheProps: [" + templateId + "] doesn't exist.");
         }
 
-        CacheProps cacheProps = CachePropsUtil.merge(cacheProps, template);
+        CacheProps cacheProps = CacheConfigUtil.merge(userProps, template);
         cachePropsMap.put(name, cacheProps);
         return cacheProps;
     }
 
     @Override
     public Collection<Cache<?, ?>> getAll() {
-        return null;
+        return Collections.unmodifiableCollection(cacheMap.values());
     }
 
     @Override
     public Collection<String> getAllCacheNames() {
-        return null;
+        return Collections.unmodifiableCollection(cacheMap.keySet());
     }
 
     public void addProvider(String beanId, CacheMonitorProvider provider) {
@@ -338,6 +335,26 @@ public class XcacheManager implements CacheManager {
 
     public void addProvider(String beanId, RemoteCacheStoreProvider provider) {
         this.remoteStoreProviderMap.put(beanId, provider);
+    }
+
+    public void addCacheProps(CacheProps cacheProps) {
+        Objects.requireNonNull(cacheProps, "cacheProps must not be null");
+        String name = StringUtils.trim(cacheProps.getName());
+        if (StringUtils.hasLength(name)) {
+            cacheProps.setName(name);
+            cachePropsMap.put(name, cacheProps);
+            return;
+        }
+        throw new CacheConfigException("cacheName must not be null or empty");
+    }
+
+    public void addCachePropsTemplate(TemplateId id, CacheProps cacheProps) {
+        Objects.requireNonNull(id, "TemplateId must not be null");
+        Objects.requireNonNull(cacheProps, "cacheProps must not be null");
+        CacheProps previous = templateMap.put(id, cacheProps);
+        if (previous != null) {
+            throw new CacheConfigException("ID:[" + id + "], Template id is duplicate");
+        }
     }
 
 }

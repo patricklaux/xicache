@@ -24,6 +24,7 @@ public interface CacheConstants {
     String REMOTE_KEY_CONVERTOR = "jacksonKeyConvertorProvider";
     String REMOTE_VALUE_SERIALIZER = "jacksonSerializerProvider";
     String REMOTE_VALUE_COMPRESSOR = "gzipCompressorProvider";
+    boolean REMOTE_ENABLE_RANDOM_TTL = false;
     boolean REMOTE_ENABLE_KEY_PREFIX = true;
     boolean REMOTE_ENABLE_NULL_VALUE = true;
     boolean REMOTE_ENABLE_COMPRESS_VALUE = false;
@@ -31,6 +32,7 @@ public interface CacheConstants {
 
     // 扩展属性默认配置 start
     String EXTENSION_CACHE_LOCK = "localCacheLockProvider";
+
 
     // 扩展属性默认配置 end
 

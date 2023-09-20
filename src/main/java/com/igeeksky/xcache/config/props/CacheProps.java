@@ -19,8 +19,6 @@ public class CacheProps {
 
     private String cacheType;
 
-    private String channel;
-
     private LocalProps local = new LocalProps();
 
     private RemoteProps remote = new RemoteProps();
@@ -34,16 +32,6 @@ public class CacheProps {
 
     public CacheProps(String name) {
         this.name = name;
-    }
-
-    public static CacheProps createDefault() {
-        CacheProps cacheProps = new CacheProps();
-        cacheProps.setTemplate("T0");
-        // TODO 完善缓存配置默认值
-        cacheProps.setLocal(LocalProps.createDefault());
-        cacheProps.setRemote(RemoteProps.createDefault());
-        cacheProps.setExtension(ExtensionProps.createDefault());
-        return cacheProps;
     }
 
     public String getName() {
@@ -84,14 +72,6 @@ public class CacheProps {
 
     public void setCacheType(String cacheType) {
         this.cacheType = cacheType;
-    }
-
-    public String getChannel() {
-        return channel;
-    }
-
-    public void setChannel(String channel) {
-        this.channel = channel;
     }
 
     public LocalProps getLocal() {

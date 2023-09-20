@@ -14,23 +14,10 @@ public class RemoteProps {
     private String keyConvertor;
     private String valueSerializer;
     private String valueCompressor;
+    private Boolean enableRandomTtl;
     private Boolean enableKeyPrefix;
     private Boolean enableNullValue;
     private Boolean enableCompressValue;
-
-    public static RemoteProps createDefault() {
-        RemoteProps remoteProps = new RemoteProps();
-        remoteProps.setCacheStore(CacheConstants.REMOTE_CACHE_STORE);
-        remoteProps.setStoreName(CacheConstants.REMOTE_STORE_NAME);
-        remoteProps.setExpireAfterWrite(CacheConstants.REMOTE_EXPIRE_AFTER_WRITE);
-        remoteProps.setKeyConvertor(CacheConstants.REMOTE_KEY_CONVERTOR);
-        remoteProps.setValueSerializer(CacheConstants.REMOTE_VALUE_SERIALIZER);
-        remoteProps.setValueCompressor(CacheConstants.REMOTE_VALUE_COMPRESSOR);
-        remoteProps.setEnableKeyPrefix(CacheConstants.REMOTE_ENABLE_KEY_PREFIX);
-        remoteProps.setEnableNullValue(CacheConstants.REMOTE_ENABLE_NULL_VALUE);
-        remoteProps.setEnableCompressValue(CacheConstants.REMOTE_ENABLE_COMPRESS_VALUE);
-        return remoteProps;
-    }
 
     public String getCacheStore() {
         return cacheStore;
@@ -80,6 +67,14 @@ public class RemoteProps {
         this.valueCompressor = valueCompressor;
     }
 
+    public Boolean getEnableRandomTtl() {
+        return enableRandomTtl;
+    }
+
+    public void setEnableRandomTtl(Boolean enableRandomTtl) {
+        this.enableRandomTtl = enableRandomTtl;
+    }
+
     public Boolean getEnableKeyPrefix() {
         return enableKeyPrefix;
     }
@@ -110,4 +105,5 @@ public class RemoteProps {
         // TODO 深度克隆 RemoteProps
         return clone;
     }
+
 }
