@@ -18,60 +18,174 @@ import java.nio.charset.StandardCharsets;
 public class CacheConfigUtil {
 
     /**
-     * //<p> 用户模板配置 覆盖 模板默认配置，生成用户自定义模板配置 </p>
+     * <p> 用户模板配置 覆盖 模板默认配置，生成用户自定义模板配置 </p>
      * <p> 用户单个缓存配置 覆盖 用户自定义模板配置，生成最终配置 </p>
-     * <p> 用户配置项如果为空，则使用模板配置项 </p>
+     * <p> 用户配置项如果为空，则使用模板配置项(或默认配置项) </p>
      * <p> String类型，如果不希望使用该配置项，可以配置为 “none” <p>
      */
-    public static CacheProps merge(CacheProps from, CacheProps template) {
-        // TODO 完善合并配置
-        // 1. 创建一个模板配置的克隆对象
-        CacheProps to = template.deepClone();
-        // 2. 将用户的有效配置项覆盖克隆对象的值
+    public static CacheProps copyProperties(CacheProps from, CacheProps to) {
         to.setName(from.getName());
         to.setTemplate(from.getTemplate());
+
         String charset = StringUtils.trim(from.getCharset());
         if (StringUtils.hasLength(charset)) {
             to.setCharset(charset);
         }
         String cacheType = StringUtils.trim(from.getCacheType());
         if (StringUtils.hasLength(cacheType)) {
-
+            to.setCacheType(cacheType);
         }
-        //
-        // String application = from.getApplication();
 
-        merge(from.getLocal(), to.getLocal());
-        merge(from.getRemote(), to.getRemote());
-        merge(from.getExtension(), to.getExtension());
+        copyProperties(from.getLocal(), to.getLocal());
+        copyProperties(from.getRemote(), to.getRemote());
+        copyProperties(from.getExtension(), to.getExtension());
+
+        to.getMetadata().putAll(from.getMetadata());
         return to;
     }
 
-    private static void merge(LocalProps from, LocalProps to) {
+    private static void copyProperties(LocalProps from, LocalProps to) {
         String cacheStore = StringUtils.trim(from.getCacheStore());
         if (StringUtils.hasLength(cacheStore)) {
             to.setCacheStore(cacheStore);
         }
+
+        String storeName = StringUtils.trim(from.getStoreName());
+        if (StringUtils.hasLength(storeName)) {
+            to.setStoreName(storeName);
+        }
+
+        Integer initialCapacity = from.getInitialCapacity();
+        if (initialCapacity != null) {
+            to.setInitialCapacity(initialCapacity);
+        }
+
+        Long maximumSize = from.getMaximumSize();
+        if (maximumSize != null) {
+            to.setMaximumSize(maximumSize);
+        }
+
+        Long maximumWeight = from.getMaximumWeight();
+        if (maximumWeight != null) {
+            to.setMaximumWeight(maximumWeight);
+        }
+
+        Long expireAfterWrite = from.getExpireAfterWrite();
+        if (expireAfterWrite != null) {
+            to.setExpireAfterWrite(expireAfterWrite);
+        }
+
+        Long expireAfterAccess = from.getExpireAfterAccess();
+        if (expireAfterAccess != null) {
+            to.setExpireAfterAccess(expireAfterAccess);
+        }
+
+        String keyStrength = StringUtils.trim(from.getKeyStrength());
+        if (StringUtils.hasLength(keyStrength)) {
+            to.setKeyStrength(keyStrength);
+        }
+
+        String valueStrength = StringUtils.trim(from.getValueStrength());
+        if (StringUtils.hasLength(valueStrength)) {
+            to.setValueStrength(valueStrength);
+        }
+
+        String valueSerializer = StringUtils.trim(from.getValueSerializer());
+        if (StringUtils.hasLength(valueSerializer)) {
+            to.setValueSerializer(valueSerializer);
+        }
+
+        String valueCompressor = StringUtils.trim(from.getValueCompressor());
+        if (StringUtils.hasLength(valueCompressor)) {
+            to.setValueCompressor(valueCompressor);
+        }
+
+        Boolean enableRandomTtl = from.getEnableRandomTtl();
+        if (enableRandomTtl != null) {
+            to.setEnableRandomTtl(enableRandomTtl);
+        }
+
+        Boolean enableKeyPrefix = from.getEnableKeyPrefix();
+        if (enableKeyPrefix != null) {
+            to.setEnableKeyPrefix(enableKeyPrefix);
+        }
+
+        Boolean enableNullValue = from.getEnableNullValue();
+        if (enableNullValue != null) {
+            to.setEnableNullValue(enableNullValue);
+        }
+
+        Boolean enableCompressValue = from.getEnableCompressValue();
+        if (enableCompressValue != null) {
+            to.setEnableCompressValue(enableCompressValue);
+        }
+
+        Boolean enableSerializeValue = from.getEnableSerializeValue();
+        if (enableSerializeValue != null) {
+            to.setEnableSerializeValue(enableSerializeValue);
+        }
     }
 
-    private static void merge(RemoteProps from, RemoteProps to) {
+    private static void copyProperties(RemoteProps from, RemoteProps to) {
         String cacheStore = StringUtils.trim(from.getCacheStore());
         if (StringUtils.hasLength(cacheStore)) {
             to.setCacheStore(cacheStore);
         }
+
+        String storeName = StringUtils.trim(from.getStoreName());
+        if (StringUtils.hasLength(storeName)) {
+            to.setStoreName(storeName);
+        }
+
+        Long expireAfterWrite = from.getExpireAfterWrite();
+        if (expireAfterWrite != null) {
+            to.setExpireAfterWrite(expireAfterWrite);
+        }
+
+        String valueSerializer = StringUtils.trim(from.getValueSerializer());
+        if (StringUtils.hasLength(valueSerializer)) {
+            to.setValueSerializer(valueSerializer);
+        }
+
+        String valueCompressor = StringUtils.trim(from.getValueCompressor());
+        if (StringUtils.hasLength(valueCompressor)) {
+            to.setValueCompressor(valueCompressor);
+        }
+
+        Boolean enableRandomTtl = from.getEnableRandomTtl();
+        if (enableRandomTtl != null) {
+            to.setEnableRandomTtl(enableRandomTtl);
+        }
+
+        Boolean enableKeyPrefix = from.getEnableKeyPrefix();
+        if (enableKeyPrefix != null) {
+            to.setEnableKeyPrefix(enableKeyPrefix);
+        }
+
+        Boolean enableNullValue = from.getEnableNullValue();
+        if (enableNullValue != null) {
+            to.setEnableNullValue(enableNullValue);
+        }
+
+        Boolean enableCompressValue = from.getEnableCompressValue();
+        if (enableCompressValue != null) {
+            to.setEnableCompressValue(enableCompressValue);
+        }
     }
 
-    private static void merge(ExtensionProps from, ExtensionProps to) {
+    private static void copyProperties(ExtensionProps from, ExtensionProps to) {
+
         String cacheLock = StringUtils.trim(from.getCacheLock());
         if (StringUtils.hasLength(cacheLock)) {
             to.setCacheLock(cacheLock);
         }
     }
 
-    public static <K, V> CacheConfig<K, V> createConfig(CacheProps cacheProps, Class<K> keyType, Class<V> valueType) {
+    public static <K, V> CacheConfig<K, V> createConfig(String application, CacheProps cacheProps,
+                                                        Class<K> keyType, Class<V> valueType) {
         CacheConfig<K, V> config = new CacheConfig<>();
         config.setName(cacheProps.getName());
-        config.setApplication(getApplication(cacheProps));
+        config.setApplication(application);
         config.setCharset(getCharset(cacheProps));
         config.setKeyType(keyType);
         config.setValueType(valueType);
@@ -109,14 +223,6 @@ public class CacheConfigUtil {
         return config;
     }
 
-    private static String getApplication(CacheProps cacheProps) {
-        String result = StringUtils.trim(cacheProps.getApplication());
-        if (StringUtils.hasLength(result)) {
-            return result;
-        }
-        throw new CacheConfigException("CacheName:[" + cacheProps.getName() + "]. application must not be empty or null.");
-    }
-
     private static Charset getCharset(CacheProps cacheProps) {
         String charsetName = StringUtils.toUpperCase(cacheProps.getCharset());
         if (StringUtils.hasLength(charsetName)) {
@@ -147,7 +253,6 @@ public class CacheConfigUtil {
         remoteProps.setCacheStore(CacheConstants.REMOTE_CACHE_STORE);
         remoteProps.setStoreName(CacheConstants.REMOTE_STORE_NAME);
         remoteProps.setExpireAfterWrite(CacheConstants.REMOTE_EXPIRE_AFTER_WRITE);
-        remoteProps.setKeyConvertor(CacheConstants.REMOTE_KEY_CONVERTOR);
         remoteProps.setValueSerializer(CacheConstants.REMOTE_VALUE_SERIALIZER);
         remoteProps.setValueCompressor(CacheConstants.REMOTE_VALUE_COMPRESSOR);
         remoteProps.setEnableRandomTtl(CacheConstants.REMOTE_ENABLE_RANDOM_TTL);

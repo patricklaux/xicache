@@ -8,7 +8,6 @@ import com.igeeksky.xcache.extension.lock.LocalCacheLock;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,31 +19,22 @@ import java.util.Map;
  */
 public class CacheConfig<K, V> {
 
-    // both
     private String name;
 
-    // both
     private String application;
 
-    // both
     private Charset charset;
 
-    // both
     private Class<K> keyType;
 
-    // both
     private Class<V> valueType;
 
-    // both
     private CacheLock<K> cacheLock;
 
-    // both
     private KeyConvertor keyConvertor;
 
-    // both
     private ContainsPredicate<K> containsPredicate;
 
-    // both
     private List<CacheMonitor<V>> monitors = new ArrayList<>();
 
     private LocalConfig<K, V> localConfig = new LocalConfig<>();

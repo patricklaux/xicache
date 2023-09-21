@@ -7,15 +7,13 @@ import java.util.Map;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
-public class CacheProps {
+public class CacheProps implements Cloneable {
 
     private String name;
 
     private String template;
 
     private String charset;
-
-    private String application;
 
     private String cacheType;
 
@@ -58,14 +56,6 @@ public class CacheProps {
         this.charset = charset;
     }
 
-    public String getApplication() {
-        return application;
-    }
-
-    public void setApplication(String application) {
-        this.application = application;
-    }
-
     public String getCacheType() {
         return cacheType;
     }
@@ -106,14 +96,17 @@ public class CacheProps {
         this.metadata = metadata;
     }
 
-    public CacheProps deepClone() {
-        CacheProps clone = new CacheProps();
-        clone.setName(this.getName());
-        // TODO 深度克隆 CacheProps
-        clone.setLocal(this.local.deepClone());
-        clone.setRemote(this.remote.deepClone());
-        clone.setExtension(this.extension.deepClone());
-        clone.setMetadata(new HashMap<>(this.metadata));
-        return clone;
+    @Override
+    public CacheProps clone() {
+        try {
+            CacheProps clone = (CacheProps) super.clone();
+            clone.setLocal(this.local.clone());
+            clone.setRemote(this.remote.clone());
+            clone.setExtension(this.extension.clone());
+            clone.setMetadata(new HashMap<>(this.metadata));
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("clone operation is not support");
+        }
     }
 }

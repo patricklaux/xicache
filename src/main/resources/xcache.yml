@@ -3,15 +3,14 @@ xcache:
   T0:
     charset: UTF-8
     cache-type: both
-    key-convertor: jacksonKeyConvertorProvider
     local:
       cache-store: caffeineCacheStoreProvider
       store-name: caffeine
       initial-capacity: 128
       maximum-size: 1024
       maximum-weight: 1024
-      keyStrength: weak
-      valueStrength: soft
+      key-strength: weak
+      value-strength: soft
       expire-after-write: 3600
       expire-after-access: 3600
       enable-random-ttl: true
@@ -31,6 +30,7 @@ xcache:
       value-compressor: gzipCompressorProvider
       value-serializer: jacksonSerializerProvider
     extension:
+      key-convertor: jacksonKeyConvertorProvider
       cache-lock: localCacheLockProvider
       cache-lock-size: 512
       cache-stat:

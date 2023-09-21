@@ -10,6 +10,7 @@ public interface CacheConstants {
      * 无需配置
      */
     String NONE = "none";
+    String KEY_CONVERTOR = "jacksonKeyConvertorProvider";
 
     // 本地缓存默认配置 start
     String LOCAL_CACHE_STORE = "caffeineCacheStoreProvider";
@@ -21,7 +22,6 @@ public interface CacheConstants {
     String REMOTE_CACHE_STORE = "lettuceCacheStoreProvider";
     String REMOTE_STORE_NAME = "redis-string";
     long REMOTE_EXPIRE_AFTER_WRITE = 3600000L;
-    String REMOTE_KEY_CONVERTOR = "jacksonKeyConvertorProvider";
     String REMOTE_VALUE_SERIALIZER = "jacksonSerializerProvider";
     String REMOTE_VALUE_COMPRESSOR = "gzipCompressorProvider";
     boolean REMOTE_ENABLE_RANDOM_TTL = false;

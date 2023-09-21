@@ -3,8 +3,8 @@ package com.igeeksky.xcache;
 import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.config.CacheConfigException;
-import com.igeeksky.xcache.config.props.CacheProps;
 import com.igeeksky.xcache.config.CacheConfigUtil;
+import com.igeeksky.xcache.config.props.CacheProps;
 import com.igeeksky.xcache.config.props.LocalProps;
 import com.igeeksky.xcache.config.props.TemplateId;
 import com.igeeksky.xcache.extension.compress.Compressor;
@@ -39,30 +39,30 @@ import java.util.concurrent.ConcurrentMap;
  * @since 0.0.4 2023-09-13
  */
 public class XcacheManager implements CacheManager {
-
     private static final String SYNC_SEPARATOR = ":sync:";
 
+    private final String application;
     private final String sid = UUID.randomUUID().toString();
-
     private final ConcurrentMap<String, Cache<?, ?>> cacheMap = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, CacheProps> cachePropsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TemplateId, CacheProps> templates = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CacheSyncManager> syncProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CacheStatManager> statProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CacheLockProvider> lockProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CacheMonitorProvider> monitorProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ContainsPredicateProvider> predicateProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, LocalCacheStoreProvider> localStoreProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, RemoteCacheStoreProvider> remoteStoreProviders = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<TemplateId, CacheProps> templateMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, CacheLockProvider> lockProviderMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, CacheSyncManager> syncProviderMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, CacheStatManager> statProviderMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, CacheMonitorProvider> monitorProviderMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, LocalCacheStoreProvider> localStoreProviderMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, RemoteCacheStoreProvider> remoteStoreProviderMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, ContainsPredicateProvider> predicateProviderMap = new ConcurrentHashMap<>();
+    public XcacheManager(String application, Map<TemplateId, CacheProps> templates, Map<String, CacheProps> caches) {
+        this.application = application;
+        templates.forEach((id, props) -> {
+            CacheProps defaultProps = CacheConfigUtil.defaultCacheProps();
+            CacheProps template = CacheConfigUtil.copyProperties(props, defaultProps);
+            this.templates.put(id, template);
+        });
+        this.cachePropsMap.putAll(caches);
+    }
 
     @Override
     @SuppressWarnings("unchecked")
@@ -79,7 +79,7 @@ public class XcacheManager implements CacheManager {
         CacheProps cacheProps = this.getOrCreateCacheProps(name);
 
         // 2. 创建 CacheConfig
-        CacheConfig<K, V> cacheConfig = CacheConfigUtil.createConfig(cacheProps, keyType, valueType);
+        CacheConfig<K, V> cacheConfig = CacheConfigUtil.createConfig(application, cacheProps, keyType, valueType);
 
         // 3. 设置 ContainsPredicate
         cacheConfig.setContainsPredicate(this.getContainsPredicate(keyType, cacheProps));
@@ -92,7 +92,7 @@ public class XcacheManager implements CacheManager {
         cacheConfig.setMonitors(monitors);
 
         // 6. 添加缓存统计类
-        CacheStatMonitor<V> statMonitor = new CacheStatMonitor<>(name, cacheConfig.getApplication());
+        CacheStatMonitor<V> statMonitor = new CacheStatMonitor<>(name, application);
         monitors.add(statMonitor);
         CacheStatManager statManager = getCacheStatManager(cacheProps);
         statManager.register(name, statMonitor);
@@ -101,15 +101,6 @@ public class XcacheManager implements CacheManager {
         CacheType cacheType = this.getCacheType(cacheProps);
         if (cacheType == CacheType.NONE) {
             return new NoOpCache<>(cacheConfig);
-        }
-
-        // 8. 添加缓存数据同步类
-        String channel = getChannel(name, cacheProps);
-        CacheSyncManager syncManager = getCacheSyncManager(cacheProps);
-        Serializer<CacheSyncMessage> syncSerializer = getSyncMessageSerializer(cacheProps);
-        CacheSyncMonitor<V> syncMonitor = getCacheSyncMonitor(channel, syncSerializer, syncManager, cacheType);
-        if (syncMonitor != null) {
-            monitors.add(syncMonitor);
         }
 
         // 9. 创建 KeyConvertor
@@ -128,13 +119,22 @@ public class XcacheManager implements CacheManager {
             // 创建 LocalCacheStore
             LocalProps local = cacheProps.getLocal();
             String beanId = local.getCacheStore();
-            LocalCacheStoreProvider localStoreProvider = localStoreProviderMap.get(beanId);
+            LocalCacheStoreProvider localStoreProvider = localStoreProviders.get(beanId);
             // 构建本地缓存配置
-
+            // 8. 添加缓存数据同步类
+            CacheSyncManager syncManager = getCacheSyncManager(cacheProps);
+            Serializer<CacheSyncMessage> syncSerializer = getSyncMessageSerializer(cacheProps);
+            String syncChannel = null;
+            if (syncManager != null) {
+                syncChannel = getCacheSyncChannel(name, cacheProps);
+                CacheSyncMonitor<V> syncMonitor = getCacheSyncMonitor(syncChannel, syncSerializer, syncManager, cacheType);
+                if (syncMonitor != null) {
+                    monitors.add(syncMonitor);
+                }
+            }
             // 获取缓存
             LocalCacheStore localCacheStore = localStoreProvider.getLocalCacheStore(cacheConfig);
-            registerSyncConsumer(syncManager, localCacheStore, syncSerializer, channel);
-
+            registerSyncConsumer(syncManager, localCacheStore, syncSerializer, syncChannel);
         }
 
         // 13. 创建远程缓存数据序列化器
@@ -148,7 +148,7 @@ public class XcacheManager implements CacheManager {
         if (cacheType == CacheType.REMOTE) {
             // 15. 创建并返回远程缓存
             String cacheStoreId = cacheProps.getRemote().getCacheStore();
-            RemoteCacheStoreProvider cacheStoreProvider = remoteStoreProviderMap.get(cacheStoreId);
+            RemoteCacheStoreProvider cacheStoreProvider = remoteStoreProviders.get(cacheStoreId);
             cacheStoreProvider.getRemoteCacheStore(cacheConfig);
 
         }
@@ -195,12 +195,12 @@ public class XcacheManager implements CacheManager {
         return null;
     }
 
-    private static String getChannel(String name, CacheProps cacheProps) {
-        String channel = StringUtils.trim(cacheProps.getChannel());
+    private static String getCacheSyncChannel(String name, CacheProps cacheProps) {
+        String channel = StringUtils.trim(cacheProps.getExtension().getCacheSyncChannel());
         if (StringUtils.hasLength(channel)) {
-            channel = channel + SYNC_SEPARATOR + name;
+            return channel + SYNC_SEPARATOR + name;
         }
-        return channel;
+        throw new CacheConfigException("CacheStatChannel must not be null or empty");
     }
 
     private Serializer<CacheSyncMessage> getSyncMessageSerializer(CacheProps cacheProps) {
@@ -243,7 +243,7 @@ public class XcacheManager implements CacheManager {
     private <K> CacheLock<K> getCacheLock(Class<K> keyType, CacheProps cacheProps) {
         String beanId = cacheProps.getExtension().getCacheLock();
         if (StringUtils.hasText(beanId)) {
-            CacheLockProvider provider = lockProviderMap.get(beanId);
+            CacheLockProvider provider = lockProviders.get(beanId);
             if (null == provider) {
                 String errMsg = String.format("CacheLockProvider:[%s] doesn't exist.", beanId);
                 throw new CacheConfigException(errMsg);
@@ -267,7 +267,7 @@ public class XcacheManager implements CacheManager {
     private <K> ContainsPredicate<K> getContainsPredicate(Class<K> keyType, CacheProps cacheProps) {
         String beanId = StringUtils.trim(cacheProps.getExtension().getContainsPredicate());
         if (StringUtils.hasText(beanId)) {
-            ContainsPredicateProvider provider = predicateProviderMap.get(beanId);
+            ContainsPredicateProvider provider = predicateProviders.get(beanId);
             if (null == provider) {
                 String errMsg = String.format("ContainsPredicateProvider:[%s] doesn't exist.", beanId);
                 throw new CacheConfigException(errMsg);
@@ -309,12 +309,12 @@ public class XcacheManager implements CacheManager {
         userProps.setTemplate(templateId.name());
 
         // 模板配置
-        CacheProps template = templateMap.get(templateId);
+        CacheProps template = templates.get(templateId);
         if (template == null) {
             throw new CacheConfigException("CacheProps: [" + templateId + "] doesn't exist.");
         }
 
-        CacheProps cacheProps = CacheConfigUtil.merge(userProps, template);
+        CacheProps cacheProps = CacheConfigUtil.copyProperties(userProps, template.clone());
         cachePropsMap.put(name, cacheProps);
         return cacheProps;
     }
@@ -330,31 +330,11 @@ public class XcacheManager implements CacheManager {
     }
 
     public void addProvider(String beanId, CacheMonitorProvider provider) {
-        this.monitorProviderMap.put(beanId, provider);
+        this.monitorProviders.put(beanId, provider);
     }
 
     public void addProvider(String beanId, RemoteCacheStoreProvider provider) {
-        this.remoteStoreProviderMap.put(beanId, provider);
-    }
-
-    public void addCacheProps(CacheProps cacheProps) {
-        Objects.requireNonNull(cacheProps, "cacheProps must not be null");
-        String name = StringUtils.trim(cacheProps.getName());
-        if (StringUtils.hasLength(name)) {
-            cacheProps.setName(name);
-            cachePropsMap.put(name, cacheProps);
-            return;
-        }
-        throw new CacheConfigException("cacheName must not be null or empty");
-    }
-
-    public void addCachePropsTemplate(TemplateId id, CacheProps cacheProps) {
-        Objects.requireNonNull(id, "TemplateId must not be null");
-        Objects.requireNonNull(cacheProps, "cacheProps must not be null");
-        CacheProps previous = templateMap.put(id, cacheProps);
-        if (previous != null) {
-            throw new CacheConfigException("ID:[" + id + "], Template id is duplicate");
-        }
+        this.remoteStoreProviders.put(beanId, provider);
     }
 
 }

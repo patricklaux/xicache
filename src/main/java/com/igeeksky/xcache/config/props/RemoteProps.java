@@ -1,17 +1,14 @@
 package com.igeeksky.xcache.config.props;
 
-import com.igeeksky.xcache.config.CacheConstants;
-
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
  */
-public class RemoteProps {
+public class RemoteProps implements Cloneable {
 
     private String cacheStore;
     private String storeName;
     private Long expireAfterWrite;
-    private String keyConvertor;
     private String valueSerializer;
     private String valueCompressor;
     private Boolean enableRandomTtl;
@@ -41,14 +38,6 @@ public class RemoteProps {
 
     public void setExpireAfterWrite(Long expireAfterWrite) {
         this.expireAfterWrite = expireAfterWrite;
-    }
-
-    public String getKeyConvertor() {
-        return keyConvertor;
-    }
-
-    public void setKeyConvertor(String keyConvertor) {
-        this.keyConvertor = keyConvertor;
     }
 
     public String getValueSerializer() {
@@ -99,11 +88,9 @@ public class RemoteProps {
         this.enableCompressValue = enableCompressValue;
     }
 
-    public RemoteProps deepClone() {
-        RemoteProps clone = new RemoteProps();
-        clone.setCacheStore(this.getCacheStore());
-        // TODO 深度克隆 RemoteProps
-        return clone;
+    @Override
+    public RemoteProps clone() throws CloneNotSupportedException {
+        return (RemoteProps) super.clone();
     }
 
 }

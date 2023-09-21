@@ -1,24 +1,20 @@
 package com.igeeksky.xcache.config.props;
 
-import com.igeeksky.xcache.config.CacheConstants;
-
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
  */
-public class LocalProps {
+public class LocalProps implements Cloneable {
 
     private String cacheStore;
     private String storeName;
     private Integer initialCapacity;
     private Long maximumSize;
     private Long maximumWeight;
-    private String keyStrength;
-    private String valueStrength;
     private Long expireAfterWrite;
     private Long expireAfterAccess;
-    private String compressor;
-    private String keyConvertor;
+    private String keyStrength;
+    private String valueStrength;
     private String valueSerializer;
     private String valueCompressor;
     private Boolean enableRandomTtl;
@@ -99,22 +95,6 @@ public class LocalProps {
         this.expireAfterAccess = expireAfterAccess;
     }
 
-    public String getCompressor() {
-        return compressor;
-    }
-
-    public void setCompressor(String compressor) {
-        this.compressor = compressor;
-    }
-
-    public String getKeyConvertor() {
-        return keyConvertor;
-    }
-
-    public void setKeyConvertor(String keyConvertor) {
-        this.keyConvertor = keyConvertor;
-    }
-
     public String getValueSerializer() {
         return valueSerializer;
     }
@@ -171,10 +151,8 @@ public class LocalProps {
         this.enableSerializeValue = enableSerializeValue;
     }
 
-    public LocalProps deepClone() {
-        LocalProps clone = new LocalProps();
-        clone.setCacheStore(this.getCacheStore());
-        // TODO 深度克隆 LocalProps
-        return clone;
+    @Override
+    public LocalProps clone() throws CloneNotSupportedException {
+        return (LocalProps) super.clone();
     }
 }
