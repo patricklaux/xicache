@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
  * @author Patrick.Lau
  * @since 0.0.3 2020-12-10
  */
-public class LocalCacheLock<K> implements CacheLock<K> {
+public class LocalCacheLock<K> implements CacheLock {
 
     private static final int DEFAULT_LOCK_SIZE = 1 << 7;
     private static final int MAXIMUM_LOCK_SIZE = 1 << 12;
@@ -45,7 +45,7 @@ public class LocalCacheLock<K> implements CacheLock<K> {
     }
 
     @Override
-    public Lock get(K key) {
+    public Lock get(String key) {
         return LOCK_ARRAY[key.hashCode() & mask];
     }
 

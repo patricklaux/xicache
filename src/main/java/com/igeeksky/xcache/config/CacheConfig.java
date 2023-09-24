@@ -3,6 +3,7 @@ package com.igeeksky.xcache.config;
 import com.igeeksky.xcache.extension.contains.AlwaysTrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.extension.lock.CacheLock;
 import com.igeeksky.xcache.extension.lock.LocalCacheLock;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
@@ -29,13 +30,15 @@ public class CacheConfig<K, V> {
 
     private Class<V> valueType;
 
-    private CacheLock<K> cacheLock;
+    private CacheLock cacheLock;
 
     private KeyConvertor keyConvertor;
 
+    private CacheLoader<K, V> cacheLoader;
+
     private ContainsPredicate<K> containsPredicate;
 
-    private List<CacheMonitor<V>> monitors = new ArrayList<>();
+    private final List<CacheMonitor<V>> monitors = new ArrayList<>();
 
     private LocalConfig<K, V> localConfig = new LocalConfig<>();
 
@@ -90,14 +93,14 @@ public class CacheConfig<K, V> {
         this.valueType = valueType;
     }
 
-    public CacheLock<K> getCacheLock() {
+    public CacheLock getCacheLock() {
         if (cacheLock != null) {
             return cacheLock;
         }
         return new LocalCacheLock<>();
     }
 
-    public void setCacheLock(CacheLock<K> cacheLock) {
+    public void setCacheLock(CacheLock cacheLock) {
         this.cacheLock = cacheLock;
     }
 
@@ -109,11 +112,19 @@ public class CacheConfig<K, V> {
         this.keyConvertor = keyConvertor;
     }
 
+    public CacheLoader<K, V> getCacheLoader() {
+        return cacheLoader;
+    }
+
+    public void setCacheLoader(CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
+    }
+
     public ContainsPredicate<K> getContainsPredicate() {
         if (containsPredicate != null) {
             return containsPredicate;
         }
-        return AlwaysTrueContainsPredicate.getINSTANCE();
+        return AlwaysTrueContainsPredicate.getInstance();
     }
 
     public void setContainsPredicate(ContainsPredicate<K> containsPredicate) {
@@ -124,8 +135,16 @@ public class CacheConfig<K, V> {
         return monitors;
     }
 
-    public void setMonitors(List<CacheMonitor<V>> monitors) {
-        this.monitors = monitors;
+    public void addMonitor(CacheMonitor<V> monitor) {
+        if (monitor != null) {
+            this.monitors.add(monitor);
+        }
+    }
+
+    public void addMonitors(List<CacheMonitor<V>> monitors) {
+        if (monitors != null) {
+            this.monitors.addAll(monitors);
+        }
     }
 
     public LocalConfig<K, V> getLocalConfig() {

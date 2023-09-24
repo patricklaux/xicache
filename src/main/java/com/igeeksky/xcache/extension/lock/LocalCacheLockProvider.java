@@ -10,12 +10,12 @@ public class LocalCacheLockProvider implements CacheLockProvider {
 
     private static final LocalCacheLockProvider INSTANCE = new LocalCacheLockProvider();
 
-    public static LocalCacheLockProvider getINSTANCE() {
+    public static LocalCacheLockProvider getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public <K> CacheLock<K> get(Class<K> keyType, CacheProps cacheProps) {
+    public CacheLock get(CacheProps cacheProps) {
         Integer lockSize = cacheProps.getExtension().getCacheLockSize();
         if (lockSize == null) {
             return new LocalCacheLock<>();

@@ -18,10 +18,7 @@ public class LocalProps implements Cloneable {
     private String valueSerializer;
     private String valueCompressor;
     private Boolean enableRandomTtl;
-    private Boolean enableKeyPrefix;
     private Boolean enableNullValue;
-    private Boolean enableCompressValue;
-    private Boolean enableSerializeValue;
 
     public String getCacheStore() {
         return cacheStore;
@@ -119,36 +116,12 @@ public class LocalProps implements Cloneable {
         this.enableRandomTtl = enableRandomTtl;
     }
 
-    public Boolean getEnableKeyPrefix() {
-        return enableKeyPrefix;
-    }
-
-    public void setEnableKeyPrefix(Boolean enableKeyPrefix) {
-        this.enableKeyPrefix = enableKeyPrefix;
-    }
-
     public Boolean getEnableNullValue() {
         return enableNullValue;
     }
 
     public void setEnableNullValue(Boolean enableNullValue) {
         this.enableNullValue = enableNullValue;
-    }
-
-    public Boolean getEnableCompressValue() {
-        return enableCompressValue;
-    }
-
-    public void setEnableCompressValue(Boolean enableCompressValue) {
-        this.enableCompressValue = enableCompressValue;
-    }
-
-    public Boolean getEnableSerializeValue() {
-        return enableSerializeValue;
-    }
-
-    public void setEnableSerializeValue(Boolean enableSerializeValue) {
-        this.enableSerializeValue = enableSerializeValue;
     }
 
     @Override

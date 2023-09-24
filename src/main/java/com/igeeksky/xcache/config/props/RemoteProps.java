@@ -11,10 +11,9 @@ public class RemoteProps implements Cloneable {
     private Long expireAfterWrite;
     private String valueSerializer;
     private String valueCompressor;
-    private Boolean enableRandomTtl;
     private Boolean enableKeyPrefix;
+    private Boolean enableRandomTtl;
     private Boolean enableNullValue;
-    private Boolean enableCompressValue;
 
     public String getCacheStore() {
         return cacheStore;
@@ -56,14 +55,6 @@ public class RemoteProps implements Cloneable {
         this.valueCompressor = valueCompressor;
     }
 
-    public Boolean getEnableRandomTtl() {
-        return enableRandomTtl;
-    }
-
-    public void setEnableRandomTtl(Boolean enableRandomTtl) {
-        this.enableRandomTtl = enableRandomTtl;
-    }
-
     public Boolean getEnableKeyPrefix() {
         return enableKeyPrefix;
     }
@@ -72,20 +63,20 @@ public class RemoteProps implements Cloneable {
         this.enableKeyPrefix = enableKeyPrefix;
     }
 
+    public Boolean getEnableRandomTtl() {
+        return enableRandomTtl;
+    }
+
+    public void setEnableRandomTtl(Boolean enableRandomTtl) {
+        this.enableRandomTtl = enableRandomTtl;
+    }
+
     public Boolean getEnableNullValue() {
         return enableNullValue;
     }
 
     public void setEnableNullValue(Boolean enableNullValue) {
         this.enableNullValue = enableNullValue;
-    }
-
-    public Boolean getEnableCompressValue() {
-        return enableCompressValue;
-    }
-
-    public void setEnableCompressValue(Boolean enableCompressValue) {
-        this.enableCompressValue = enableCompressValue;
     }
 
     @Override

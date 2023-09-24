@@ -85,6 +85,14 @@ public class LettuceConnectionManager implements AutoCloseable {
         return cluster;
     }
 
+    public RedisReactiveCommands<byte[], byte[]> getRedisReactiveCommands() {
+        return redisReactiveCommands;
+    }
+
+    public RedisClusterReactiveCommands<byte[], byte[]> getClusterReactiveCommands() {
+        return clusterReactiveCommands;
+    }
+
     public StatefulConnection<byte[], byte[]> getBashStatefulConnection() {
         if (bashRedisConnection != null) {
             return bashRedisConnection;

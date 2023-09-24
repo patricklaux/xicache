@@ -56,8 +56,11 @@ public class CacheStatistics {
 
     public float getHitPercentage() {
         long gets = this.hits + this.misses;
-        BigDecimal percentage = new BigDecimal(this.hits).divide(new BigDecimal(gets), 6, RoundingMode.HALF_UP);
-        return Float.parseFloat(percentage.toPlainString());
+        if (gets > 0) {
+            BigDecimal percentage = new BigDecimal(this.hits).divide(new BigDecimal(gets), 6, RoundingMode.HALF_UP);
+            return Float.parseFloat(percentage.toPlainString());
+        }
+        return 0F;
     }
 
     @Override

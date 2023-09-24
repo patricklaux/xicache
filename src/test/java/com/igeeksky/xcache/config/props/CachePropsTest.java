@@ -14,21 +14,21 @@ class CachePropsTest {
     void testClone() {
         CacheProps props = new CacheProps();
         props.setName("user");
-        props.getLocal().setEnableKeyPrefix(false);
+        props.getRemote().setEnableKeyPrefix(false);
         props.getLocal().setExpireAfterAccess(100L);
 
         CacheProps clone = props.clone();
 
         props.setName("order");
-        props.getLocal().setEnableKeyPrefix(true);
+        props.getRemote().setEnableKeyPrefix(true);
         props.getLocal().setExpireAfterAccess(101L);
 
-        System.out.println(clone.getName());
-        System.out.println(clone.getLocal().getEnableKeyPrefix());
-        System.out.println(clone.getLocal().getExpireAfterAccess());
+        System.out.println(clone.getName() + " - " + props.getName());
+        System.out.println(clone.getRemote().getEnableKeyPrefix() + " - " + props.getRemote().getEnableKeyPrefix());
+        System.out.println(clone.getLocal().getExpireAfterAccess() + " - " + props.getLocal().getExpireAfterAccess());
 
         assertNotEquals(props.getName(), clone.getName());
-        assertNotEquals(props.getLocal().getEnableKeyPrefix(), clone.getLocal().getEnableKeyPrefix());
+        assertNotEquals(props.getRemote().getEnableKeyPrefix(), clone.getRemote().getEnableKeyPrefix());
         assertNotEquals(props.getLocal().getExpireAfterAccess(), clone.getLocal().getExpireAfterAccess());
     }
 

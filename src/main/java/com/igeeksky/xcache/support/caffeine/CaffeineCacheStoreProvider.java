@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Weigher;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.config.CacheConfigException;
+import com.igeeksky.xcache.config.CacheConstants;
 import com.igeeksky.xcache.store.LocalCacheStore;
 import com.igeeksky.xcache.store.LocalCacheStoreProvider;
 import com.igeeksky.xtool.core.lang.StringUtils;
@@ -36,7 +37,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
         // 1.1. 基于时间的自定义驱逐策略
         if (expiryProvider != null) {
             Expiry<String, CacheValue<Object>> expiry = expiryProvider.get(config);
-            if (null != expiry) {
+            if (expiry != null) {
                 builder.expireAfter(expiry);
                 return createCaffeineStore(config, builder);
             }
@@ -103,7 +104,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
 
         // 5.1. 基于 Key 的弱引用驱逐策略
         String keyStrength = StringUtils.toLowerCase(config.getLocalConfig().getKeyStrength());
-        if (StringUtils.hasLength(keyStrength)) {
+        if (StringUtils.hasLength(keyStrength) && !Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(keyStrength))) {
             if (Objects.equals(weak, keyStrength)) {
                 builder.weakKeys();
             } else {
@@ -113,7 +114,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
 
         // 5.2. 基于 value 的弱引用和软引用驱逐策略
         String valueStrength = StringUtils.toLowerCase(config.getLocalConfig().getValueStrength());
-        if (StringUtils.hasLength(valueStrength)) {
+        if (StringUtils.hasLength(valueStrength) && !Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(valueStrength))) {
             if (Objects.equals(weak, valueStrength)) {
                 builder.weakValues();
             } else if (Objects.equals(soft, valueStrength)) {

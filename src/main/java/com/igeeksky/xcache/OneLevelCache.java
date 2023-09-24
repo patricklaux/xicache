@@ -1,10 +1,10 @@
 package com.igeeksky.xcache;
 
-import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.KeyValue;
 import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.config.CacheConfig;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProxy;
 import com.igeeksky.xcache.store.LocalCacheStore;
 import com.igeeksky.xcache.store.RemoteCacheStore;
@@ -21,6 +21,8 @@ import java.util.Set;
  */
 public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
+    private final StoreType storeType;
+
     private final LocalCacheStore localStore;
 
     private final RemoteCacheStore remoteStore;
@@ -31,6 +33,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
         super(config);
         this.localStore = localStore;
         this.remoteStore = remoteStore;
+        this.storeType = (localStore != null) ? StoreType.LOCAL : StoreType.REMOTE;
         this.cacheMonitor.addCacheMonitors(config.getMonitors());
     }
 
@@ -39,11 +42,11 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
         if (localStore != null) {
             return localStore.get(key)
                     .flatMap(this::fromLocalStoreValue)
-                    .doOnNext(value -> cacheMonitor.afterGet(key, value, StoreType.LOCAL));
+                    .doOnNext(value -> cacheMonitor.afterGet(key, value, storeType));
         } else {
             return remoteStore.get(key)
                     .flatMap(this::fromRemoteStoreValue)
-                    .doOnNext(value -> cacheMonitor.afterGet(key, value, StoreType.REMOTE));
+                    .doOnNext(value -> cacheMonitor.afterGet(key, value, storeType));
         }
     }
 
@@ -60,11 +63,11 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
         if (localStore != null) {
             return localStore.getAll(keys)
                     .flatMap(kv -> fromLocalStoreValue(kv.getValue()).map(v -> new KeyValue<>(kv.getKey(), v)))
-                    .doOnNext(kv -> cacheMonitor.afterGet(kv.getKey(), kv.getValue(), StoreType.LOCAL));
+                    .doOnNext(kv -> cacheMonitor.afterGet(kv.getKey(), kv.getValue(), storeType));
         } else {
             return remoteStore.getAll(keys)
                     .flatMap(kv -> fromRemoteStoreValue(kv.getValue()).map(v -> new KeyValue<>(kv.getKey(), v)))
-                    .doOnNext(kv -> cacheMonitor.afterGet(kv.getKey(), kv.getValue(), StoreType.REMOTE));
+                    .doOnNext(kv -> cacheMonitor.afterGet(kv.getKey(), kv.getValue(), storeType));
         }
     }
 
@@ -72,10 +75,10 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     protected Mono<Void> doPut(String key, V value) {
         if (localStore != null) {
             return localStore.put(key, Mono.justOrEmpty(toLocalStoreValue(value)))
-                    .doOnSuccess(vod -> cacheMonitor.afterPut(key, value, StoreType.LOCAL));
+                    .doOnSuccess(vod -> cacheMonitor.afterPut(key, value, storeType));
         } else {
             return remoteStore.put(key, Mono.justOrEmpty(toRemoteStoreValue(value)))
-                    .doOnSuccess(vod -> cacheMonitor.afterPut(key, value, StoreType.REMOTE));
+                    .doOnSuccess(vod -> cacheMonitor.afterPut(key, value, storeType));
         }
     }
 
@@ -90,7 +93,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
                     })
                     .flatMap(map ->
                             localStore.putAll(Mono.just(map))
-                                    .doOnSuccess(vod -> cacheMonitor.afterPutAll(keyValues, StoreType.LOCAL))
+                                    .doOnSuccess(vod -> cacheMonitor.afterPutAll(keyValues, storeType))
                     );
         } else {
             return Mono.just(keyValues)
@@ -101,7 +104,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
                     })
                     .flatMap(map ->
                             remoteStore.putAll(Mono.just(map))
-                                    .doOnSuccess(vod -> cacheMonitor.afterPutAll(keyValues, StoreType.REMOTE))
+                                    .doOnSuccess(vod -> cacheMonitor.afterPutAll(keyValues, storeType))
                     );
         }
     }
@@ -110,10 +113,10 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     protected Mono<Void> doRemove(String key) {
         if (localStore != null) {
             return localStore.remove(key)
-                    .doOnSuccess(vod -> cacheMonitor.afterRemove(key, StoreType.LOCAL));
+                    .doOnSuccess(vod -> cacheMonitor.afterRemove(key, storeType));
         } else {
             return remoteStore.remove(key)
-                    .doOnSuccess(vod -> cacheMonitor.afterRemove(key, StoreType.REMOTE));
+                    .doOnSuccess(vod -> cacheMonitor.afterRemove(key, storeType));
         }
 
     }
@@ -123,11 +126,11 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
         if (localStore != null) {
             return Mono.just(keys)
                     .flatMap(localStore::removeAll)
-                    .doOnSuccess(vod -> cacheMonitor.afterRemoveAll(keys, StoreType.LOCAL));
+                    .doOnSuccess(vod -> cacheMonitor.afterRemoveAll(keys, storeType));
         } else {
             return Mono.just(keys)
                     .flatMap(remoteStore::removeAll)
-                    .doOnSuccess(vod -> cacheMonitor.afterRemoveAll(keys, StoreType.REMOTE));
+                    .doOnSuccess(vod -> cacheMonitor.afterRemoveAll(keys, storeType));
         }
     }
 
@@ -135,10 +138,10 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     public Mono<Void> clear() {
         if (localStore != null) {
             return localStore.clear()
-                    .doOnSuccess(vod -> cacheMonitor.afterClear(StoreType.LOCAL));
+                    .doOnSuccess(vod -> cacheMonitor.afterClear(storeType));
         } else {
             return remoteStore.clear()
-                    .doOnSuccess(vod -> cacheMonitor.afterClear(StoreType.REMOTE));
+                    .doOnSuccess(vod -> cacheMonitor.afterClear(storeType));
         }
     }
 

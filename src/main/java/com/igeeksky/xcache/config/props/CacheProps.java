@@ -106,7 +106,7 @@ public class CacheProps implements Cloneable {
             clone.setMetadata(new HashMap<>(this.metadata));
             return clone;
         } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("clone operation is not support");
+            throw new RuntimeException("clone operation is not support.", e);
         }
     }
 }

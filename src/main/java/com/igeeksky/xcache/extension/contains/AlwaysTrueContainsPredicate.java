@@ -11,7 +11,7 @@ public class AlwaysTrueContainsPredicate<K> implements ContainsPredicate<K> {
     private static final AlwaysTrueContainsPredicate<?> INSTANCE = new AlwaysTrueContainsPredicate<>();
 
     @SuppressWarnings("unchecked")
-    public static <K> AlwaysTrueContainsPredicate<K> getINSTANCE() {
+    public static <K> AlwaysTrueContainsPredicate<K> getInstance() {
         return (AlwaysTrueContainsPredicate<K>) INSTANCE;
     }
 

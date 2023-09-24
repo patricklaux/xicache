@@ -3,7 +3,7 @@ package com.igeeksky.xcache.extension.statistic;
 import java.util.StringJoiner;
 
 /**
- * 统计信息
+ * 缓存统计信息
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11

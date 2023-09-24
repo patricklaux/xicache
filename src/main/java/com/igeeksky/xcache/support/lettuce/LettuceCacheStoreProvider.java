@@ -2,7 +2,9 @@ package com.igeeksky.xcache.support.lettuce;
 
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.extension.redis.RedisHashCacheStore;
+import com.igeeksky.xcache.extension.redis.RedisHashWriter;
 import com.igeeksky.xcache.extension.redis.RedisStringCacheStore;
+import com.igeeksky.xcache.extension.redis.RedisStringWriter;
 import com.igeeksky.xcache.extension.serializer.StringSerializer;
 import com.igeeksky.xcache.store.RemoteCacheStore;
 import com.igeeksky.xcache.store.RemoteCacheStoreProvider;
@@ -17,9 +19,9 @@ import java.util.Objects;
  */
 public class LettuceCacheStoreProvider implements RemoteCacheStoreProvider {
 
-    private final LettuceRedisHashWriter redisHashWriter;
+    private final RedisHashWriter redisHashWriter;
 
-    private final LettuceRedisStringWriter redisStringWriter;
+    private final RedisStringWriter redisStringWriter;
 
     public LettuceCacheStoreProvider(LettuceConnectionManager connectionManager) {
         this.redisHashWriter = new LettuceRedisHashWriter(connectionManager);

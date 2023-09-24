@@ -7,4 +7,6 @@ package com.igeeksky.xcache.common;
  * @since 0.0.3 2021-08-17
  */
 public interface Provider extends AutoCloseable {
+
+
 }

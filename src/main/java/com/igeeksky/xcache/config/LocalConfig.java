@@ -11,46 +11,19 @@ import com.igeeksky.xcache.extension.serializer.Serializer;
  */
 public class LocalConfig<K, V> {
 
-    // Local & Remote
     private String storeName;
-
-    // Local
     private int initialCapacity;
-
-    // Local
     private long maximumSize;
-
-    // Local(Caffeine)
     private long maximumWeight;
-
-    // Local(Caffeine)
     private String keyStrength;
-
-    // Local(Caffeine)
     private String valueStrength;
-
-    // Local & Remote
     private long expireAfterWrite;
-
-    // Local
     private long expireAfterAccess;
-
-    // Local & Remote
-    private boolean enableRandomTtl = true;
-
-    // Local & Remote
-    private boolean enableNullValue = true;
-
-    // Local & Remote
-    private boolean enableCompressValue = false;
-
-    // Local & Remote
-    private boolean enableSerializeValue = false;
-
-    // Local & Remote
+    private boolean enableRandomTtl;
+    private boolean enableNullValue;
+    private boolean enableCompressValue;
+    private boolean enableSerializeValue;
     private Compressor valueCompressor;
-
-    // Local & Remote
     private Serializer<V> valueSerializer;
 
     public String getStoreName() {

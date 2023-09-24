@@ -14,6 +14,6 @@ public interface CacheLockProvider extends Provider {
     /**
      * 获取缓存锁的Holder
      */
-    <K> CacheLock<K> get(Class<K> keyType, CacheProps cacheProps);
+    CacheLock get(CacheProps cacheProps);
 
 }

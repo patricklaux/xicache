@@ -7,19 +7,14 @@ package com.igeeksky.xcache.config.props;
 public class ExtensionProps implements Cloneable {
 
     private String keyConvertor;
-
     private String cacheLock;
-
     private Integer cacheLockSize;
-
     private String containsPredicate;
-
     private String cacheSync;
-
     private String cacheSyncChannel;
-
+    private String cacheSyncSerializer;
     private String cacheStat;
-
+    private String cacheLoader;
     private String cacheMonitors;
 
     public String getKeyConvertor() {
@@ -70,12 +65,28 @@ public class ExtensionProps implements Cloneable {
         this.cacheSyncChannel = cacheSyncChannel;
     }
 
+    public String getCacheSyncSerializer() {
+        return cacheSyncSerializer;
+    }
+
+    public void setCacheSyncSerializer(String cacheSyncSerializer) {
+        this.cacheSyncSerializer = cacheSyncSerializer;
+    }
+
     public String getCacheStat() {
         return cacheStat;
     }
 
     public void setCacheStat(String cacheStat) {
         this.cacheStat = cacheStat;
+    }
+
+    public String getCacheLoader() {
+        return cacheLoader;
+    }
+
+    public void setCacheLoader(String cacheLoader) {
+        this.cacheLoader = cacheLoader;
     }
 
     public String getCacheMonitors() {

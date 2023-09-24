@@ -107,6 +107,11 @@ public class CacheStatMonitor<V> implements CacheMonitor<V> {
         }
     }
 
+    /**
+     * 采集缓存统计信息
+     *
+     * @return {@link CacheStatMessage} 缓存统计信息
+     */
     public CacheStatMessage collect() {
         CacheStatCounter noopCounter = refNone.getAndSet(new CacheStatCounter());
         CacheStatCounter localCounter = refLocal.getAndSet(new CacheStatCounter());

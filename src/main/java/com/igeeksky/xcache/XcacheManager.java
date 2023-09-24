@@ -4,14 +4,16 @@ import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.config.CacheConfigException;
 import com.igeeksky.xcache.config.CacheConfigUtil;
+import com.igeeksky.xcache.config.CacheConstants;
 import com.igeeksky.xcache.config.props.CacheProps;
-import com.igeeksky.xcache.config.props.LocalProps;
 import com.igeeksky.xcache.config.props.TemplateId;
 import com.igeeksky.xcache.extension.compress.Compressor;
+import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xcache.extension.contains.AlwaysTrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
+import com.igeeksky.xcache.extension.convertor.KeyConvertorProvider;
 import com.igeeksky.xcache.extension.lock.CacheLock;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xcache.extension.lock.LocalCacheLock;
@@ -19,37 +21,42 @@ import com.igeeksky.xcache.extension.lock.LocalCacheLockProvider;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProvider;
 import com.igeeksky.xcache.extension.serializer.Serializer;
+import com.igeeksky.xcache.extension.serializer.SerializerProvider;
 import com.igeeksky.xcache.extension.statistic.CacheStatManager;
 import com.igeeksky.xcache.extension.statistic.CacheStatMonitor;
-import com.igeeksky.xcache.extension.statistic.LogCacheStatManager;
 import com.igeeksky.xcache.extension.sync.*;
 import com.igeeksky.xcache.store.LocalCacheStore;
 import com.igeeksky.xcache.store.LocalCacheStoreProvider;
+import com.igeeksky.xcache.store.RemoteCacheStore;
 import com.igeeksky.xcache.store.RemoteCacheStoreProvider;
+import com.igeeksky.xtool.core.annotation.Perfect;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
 public class XcacheManager implements CacheManager {
-    private static final String SYNC_SEPARATOR = ":sync:";
 
     private final String application;
     private final String sid = UUID.randomUUID().toString();
     private final ConcurrentMap<String, Cache<?, ?>> cacheMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheProps> cachePropsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CacheProps> userPropsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<TemplateId, CacheProps> templates = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, SerializerProvider> serializers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CompressorProvider> compressors = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheSyncManager> syncProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheStatManager> statProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheLockProvider> lockProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheMonitorProvider> monitorProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, KeyConvertorProvider> keyConvertorProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ContainsPredicateProvider> predicateProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, LocalCacheStoreProvider> localStoreProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RemoteCacheStoreProvider> remoteStoreProviders = new ConcurrentHashMap<>();
@@ -57,235 +64,84 @@ public class XcacheManager implements CacheManager {
     public XcacheManager(String application, Map<TemplateId, CacheProps> templates, Map<String, CacheProps> caches) {
         this.application = application;
         templates.forEach((id, props) -> {
-            CacheProps defaultProps = CacheConfigUtil.defaultCacheProps();
+            CacheProps defaultProps = CacheConfigUtil.defaultCacheProps(id);
             CacheProps template = CacheConfigUtil.copyProperties(props, defaultProps);
             this.templates.put(id, template);
         });
-        this.cachePropsMap.putAll(caches);
+        this.userPropsMap.putAll(caches);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <K, V> Cache<K, V> getOrCreateCache(String name, Class<K> keyType, Class<V> valueType) {
-        String cacheName = StringUtils.trim(name);
-        if (!StringUtils.hasLength(cacheName)) {
-            throw new CacheConfigException("cacheName must not be null or empty");
-        }
-        return (Cache<K, V>) cacheMap.computeIfAbsent(cacheName, k -> createCache(k, keyType, valueType));
+    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+        String name = StringUtils.trim(cacheName);
+        requireNonNull(keyType, () -> "keyType must not be null");
+        requireNonNull(valueType, () -> "valueType must not be null");
+        requireNotEmpty(name, () -> "cacheName must not be null or empty");
+        return (Cache<K, V>) cacheMap.computeIfAbsent(name, k -> createCache(k, keyType, valueType));
     }
 
     private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType) {
-        // 1. 获取配置
-        CacheProps cacheProps = this.getOrCreateCacheProps(name);
+        // 1. 获取配置 @Perfect
+        CacheProps props = this.getOrCreateCacheProps(name);
 
-        // 2. 创建 CacheConfig
-        CacheConfig<K, V> cacheConfig = CacheConfigUtil.createConfig(application, cacheProps, keyType, valueType);
+        // 2. 创建 CacheConfig @Perfect
+        CacheConfig<K, V> config = CacheConfigUtil.createConfig(application, keyType, valueType, props);
+        Charset charset = config.getCharset();
 
-        // 3. 设置 ContainsPredicate
-        cacheConfig.setContainsPredicate(this.getContainsPredicate(keyType, cacheProps));
+        // 3. 设置 CacheLock @Perfect
+        config.setCacheLock(this.getCacheLock(props));
 
-        // 4. 设置 CacheLock
-        cacheConfig.setCacheLock(this.getCacheLock(keyType, cacheProps));
+        // 4. 设置 ContainsPredicate @Perfect
+        config.setContainsPredicate(this.getContainsPredicate(keyType, props));
 
-        // 5. 设置 CacheMonitors
-        List<CacheMonitor<V>> monitors = this.getCacheMonitors(name, keyType, valueType, cacheProps);
-        cacheConfig.setMonitors(monitors);
+        // 5. 设置 CacheMonitors @Perfect
+        config.addMonitors(this.getCacheMonitors(keyType, valueType, props));
 
-        // 6. 添加缓存统计类
-        CacheStatMonitor<V> statMonitor = new CacheStatMonitor<>(name, application);
-        monitors.add(statMonitor);
-        CacheStatManager statManager = getCacheStatManager(cacheProps);
-        statManager.register(name, statMonitor);
+        // 6. 添加缓存统计类 @Perfect
+        config.addMonitor(this.getCacheStatMonitor(props));
 
-        // 7. 通过 CacheProps 判断是否需要创建 CacheStore
-        CacheType cacheType = this.getCacheType(cacheProps);
+        // 7. 创建无操作缓存 @Perfect
+        CacheType cacheType = this.getCacheType(props);
         if (cacheType == CacheType.NONE) {
-            return new NoOpCache<>(cacheConfig);
+            return new NoOpCache<>(config);
         }
 
-        // 9. 创建 KeyConvertor
-        KeyConvertor keyConvertor = getKeyConvertor(cacheProps);
-        cacheConfig.setKeyConvertor(keyConvertor);
+        // 8. 添加 KeyConvertor @Perfect
+        config.setKeyConvertor(this.getKeyConvertor(charset, props));
 
-        // 10. 创建本地缓存数据序列化器
-        Serializer<V> localSerializer = getLocalSerializer(cacheProps);
-        cacheConfig.getLocalConfig().setValueSerializer(localSerializer);
-
-        // 11. 创建本地缓存数据压缩器
-        Compressor localCompressor = getLocalCompressor(cacheProps);
-        cacheConfig.getLocalConfig().setValueCompressor(localCompressor);
-
+        // TODO 11. 添加 cacheLoader
         if (cacheType == CacheType.LOCAL) {
-            // 创建 LocalCacheStore
-            LocalProps local = cacheProps.getLocal();
-            String beanId = local.getCacheStore();
-            LocalCacheStoreProvider localStoreProvider = localStoreProviders.get(beanId);
-            // 构建本地缓存配置
-            // 8. 添加缓存数据同步类
-            CacheSyncManager syncManager = getCacheSyncManager(cacheProps);
-            Serializer<CacheSyncMessage> syncSerializer = getSyncMessageSerializer(cacheProps);
-            String syncChannel = null;
-            if (syncManager != null) {
-                syncChannel = getCacheSyncChannel(name, cacheProps);
-                CacheSyncMonitor<V> syncMonitor = getCacheSyncMonitor(syncChannel, syncSerializer, syncManager, cacheType);
-                if (syncMonitor != null) {
-                    monitors.add(syncMonitor);
-                }
-            }
-            // 获取缓存
-            LocalCacheStore localCacheStore = localStoreProvider.getLocalCacheStore(cacheConfig);
-            registerSyncConsumer(syncManager, localCacheStore, syncSerializer, syncChannel);
+            // 9. 准备本地缓存的值的序列化器和压缩器
+            prepareLocalCacheStore(charset, valueType, props, config);
+            // 10. 创建本地缓存
+            LocalCacheStore localStore = this.getLocalCacheStore(props, config);
+            // 11. 添加缓存数据同步
+            cacheSync(props, config, cacheType, localStore);
+            return new OneLevelCache<>(config, localStore, null);
         }
 
-        // 13. 创建远程缓存数据序列化器
-        Serializer<V> remoteSerializer = getRemoteSerializer(cacheProps);
-        cacheConfig.getRemoteConfig().setValueSerializer(remoteSerializer);
+        // 12. 添加远程缓存值序列化
+        String remoteSerializer = props.getRemote().getValueSerializer();
+        requireNotEmpty(remoteSerializer, () -> "Cache:[" + name + "] remote:\"value-serializer\" must not be null or empty");
+        config.getRemoteConfig().setValueSerializer(this.getValueSerializer(name, remoteSerializer, charset, valueType));
 
-        // 14. 创建远程缓存数据压缩器
-        Compressor remoteCompressor = getRemoteCompressor(cacheProps);
-        cacheConfig.getRemoteConfig().setValueCompressor(remoteCompressor);
+        // 13. 添加远程缓存值压缩器
+        if (config.getRemoteConfig().isEnableCompressValue()) {
+            config.getRemoteConfig().setValueCompressor(this.getValueCompressor(props.getRemote().getValueCompressor()));
+        }
 
+        // 14. 创建远程缓存
         if (cacheType == CacheType.REMOTE) {
-            // 15. 创建并返回远程缓存
-            String cacheStoreId = cacheProps.getRemote().getCacheStore();
-            RemoteCacheStoreProvider cacheStoreProvider = remoteStoreProviders.get(cacheStoreId);
-            cacheStoreProvider.getRemoteCacheStore(cacheConfig);
-
+            return new OneLevelCache<>(config, null, this.getRemoteCacheStore(props, config));
         }
 
-        // 16. 创建并返回两级缓存
-
-        return null;
-    }
-
-    private Compressor getRemoteCompressor(CacheProps cacheProps) {
-        return null;
-    }
-
-    private <V> Serializer<V> getRemoteSerializer(CacheProps cacheProps) {
-        return null;
-    }
-
-    private <V> Serializer<V> getLocalSerializer(CacheProps cacheProps) {
-        return null;
-    }
-
-    private KeyConvertor getKeyConvertor(CacheProps cacheProps) {
-        return null;
-    }
-
-    private Compressor getLocalCompressor(CacheProps cacheProps) {
-        return null;
-    }
-
-    private void registerSyncConsumer(CacheSyncManager syncManager, LocalCacheStore localCacheStore, Serializer<CacheSyncMessage> syncSerializer, String channel) {
-        if (syncManager != null) {
-            CacheSyncConsumer syncConsumer = new CacheSyncConsumer(sid, localCacheStore, syncSerializer);
-            syncManager.register(channel, syncConsumer);
-        }
-    }
-
-    private <V> CacheSyncMonitor<V> getCacheSyncMonitor(String channel, Serializer<CacheSyncMessage> serializer,
-                                                        CacheSyncManager syncManager, CacheType cacheType) {
-        if (syncManager != null) {
-            CacheMessagePublisher publisher = syncManager.getPublisher(channel);
-
-            return new CacheSyncMonitor<>(sid, channel, cacheType, publisher, serializer);
-        }
-        return null;
-    }
-
-    private static String getCacheSyncChannel(String name, CacheProps cacheProps) {
-        String channel = StringUtils.trim(cacheProps.getExtension().getCacheSyncChannel());
-        if (StringUtils.hasLength(channel)) {
-            return channel + SYNC_SEPARATOR + name;
-        }
-        throw new CacheConfigException("CacheStatChannel must not be null or empty");
-    }
-
-    private Serializer<CacheSyncMessage> getSyncMessageSerializer(CacheProps cacheProps) {
-        return null;
-    }
-
-    private CacheSyncManager getCacheSyncManager(CacheProps cacheProps) {
-        return null;
-    }
-
-    private CacheStatManager getCacheStatManager(CacheProps cacheProps) {
-        // TODO 完善此类
-        return new LogCacheStatManager(10000);
-    }
-
-    private Charset getCharset(String charset) {
-        String charsetName = StringUtils.toUpperCase(charset);
-        if (StringUtils.hasLength(charsetName)) {
-            return Charset.forName(charsetName);
-        }
-        return StandardCharsets.UTF_8;
-    }
-
-    private <K, V> List<CacheMonitor<V>> getCacheMonitors(String name, Class<K> keyType, Class<V> valueType, CacheProps cacheProps) {
-        // TODO 添加 CacheMonitors
-
-        return new ArrayList<>();
-    }
-
-    /**
-     * 获取
-     *
-     * @param keyType    键 class
-     * @param cacheProps 缓存配置
-     * @param <K>        键泛型参数
-     * @return <p>{@link CacheLock}</p>
-     * <p>如果未配置，默认返回 {@link LocalCacheLock}</p>
-     * <p>如果有配置：配置 bean 正确，返回配置的 CacheLock；配置 bean 错误，抛出异常 {@link CacheConfigException} </p>
-     */
-    private <K> CacheLock<K> getCacheLock(Class<K> keyType, CacheProps cacheProps) {
-        String beanId = cacheProps.getExtension().getCacheLock();
-        if (StringUtils.hasText(beanId)) {
-            CacheLockProvider provider = lockProviders.get(beanId);
-            if (null == provider) {
-                String errMsg = String.format("CacheLockProvider:[%s] doesn't exist.", beanId);
-                throw new CacheConfigException(errMsg);
-            }
-            return provider.get(keyType, cacheProps);
-        }
-
-        return LocalCacheLockProvider.getINSTANCE().get(keyType, cacheProps);
-    }
-
-    /**
-     * 获取
-     *
-     * @param keyType    键 class
-     * @param cacheProps 缓存配置
-     * @param <K>        键泛型参数
-     * @return <p>{@link ContainsPredicate}</p>
-     * <p>如果未配置，默认返回 AlwaysTrueContainsPredicate</p>
-     * <p>如果有配置：配置 bean 正确，返回配置的 ContainsPredicate；配置 bean 错误，抛出异常 {@link CacheConfigException} </p>
-     */
-    private <K> ContainsPredicate<K> getContainsPredicate(Class<K> keyType, CacheProps cacheProps) {
-        String beanId = StringUtils.trim(cacheProps.getExtension().getContainsPredicate());
-        if (StringUtils.hasText(beanId)) {
-            ContainsPredicateProvider provider = predicateProviders.get(beanId);
-            if (null == provider) {
-                String errMsg = String.format("ContainsPredicateProvider:[%s] doesn't exist.", beanId);
-                throw new CacheConfigException(errMsg);
-            }
-            return provider.get(keyType, cacheProps);
-        }
-        return AlwaysTrueContainsPredicate.getINSTANCE();
-    }
-
-    /**
-     * 通过缓存配置 获取 [缓存类型]
-     *
-     * @param cacheProps 缓存配置
-     * @return {@link CacheType} 缓存类型
-     */
-    private CacheType getCacheType(CacheProps cacheProps) {
-        String cacheType = StringUtils.toUpperCase(cacheProps.getCacheType());
-        return CacheType.valueOf(cacheType);
+        // 15. 创建两级缓存
+        prepareLocalCacheStore(charset, valueType, props, config);
+        LocalCacheStore localStore = this.getLocalCacheStore(props, config);
+        RemoteCacheStore remoteStore = this.getRemoteCacheStore(props, config);
+        cacheSync(props, config, cacheType, localStore);
+        return new TwoLevelCache<>(config, localStore, remoteStore);
     }
 
     /**
@@ -294,29 +150,260 @@ public class XcacheManager implements CacheManager {
      * @param name 缓存名称
      * @return {@link CacheProps} 缓存配置
      */
+    @Perfect
     private CacheProps getOrCreateCacheProps(String name) {
-        // 用户配置
-        CacheProps userProps = cachePropsMap.get(name);
-        if (userProps == null) {
-            userProps = new CacheProps(name);
-        }
-
-        TemplateId templateId = TemplateId.T0;
-        String templateStr = StringUtils.toUpperCase(userProps.getTemplate());
-        if (StringUtils.hasLength(templateStr)) {
-            templateId = TemplateId.valueOf(templateStr);
-        }
-        userProps.setTemplate(templateId.name());
-
-        // 模板配置
+        // 获取用户配置
+        CacheProps userProps = userPropsMap.computeIfAbsent(name, k -> new CacheProps(name));
+        // 获取模板配置
+        TemplateId templateId = getTemplateId(userProps.getTemplate());
         CacheProps template = templates.get(templateId);
-        if (template == null) {
-            throw new CacheConfigException("CacheProps: [" + templateId + "] doesn't exist.");
+        requireNonNull(template, () -> String.format("CacheProps template: [%s] doesn't exist.", templateId));
+        // 用户配置 覆盖 模板配置
+        return CacheConfigUtil.copyProperties(userProps, template.clone());
+    }
+
+    private static TemplateId getTemplateId(String idStr) {
+        String template = StringUtils.toUpperCase(idStr);
+        if (StringUtils.hasLength(template)) {
+            return TemplateId.valueOf(template);
+        }
+        return CacheConstants.DEFAULT_TEMPLATE;
+    }
+
+    /**
+     * @param props 缓存配置
+     * @return <p>{@link CacheLock}</p>
+     * <p>如果未配置，默认返回 {@link LocalCacheLock}</p>
+     * <p>如果有配置：配置 bean 正确，返回配置的 CacheLock；配置 bean 错误，抛出异常 {@link CacheConfigException} </p>
+     */
+    @Perfect
+    private CacheLock getCacheLock(CacheProps props) {
+        String beanId = props.getExtension().getCacheLock();
+        if (StringUtils.hasLength(beanId) && !Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
+            CacheLockProvider provider = lockProviders.get(beanId);
+            requireNonNull(provider, () -> "CacheLockProvider:[" + beanId + "] is undefined.");
+            CacheLock cacheLock = provider.get(props);
+            requireNonNull(cacheLock, () -> "Unable to get lock from provider:[" + beanId + "].");
+            return cacheLock;
+        }
+        return LocalCacheLockProvider.getInstance().get(props);
+    }
+
+    /**
+     * @param keyType 键 class
+     * @param props   缓存配置
+     * @param <K>     键泛型参数
+     * @return <p>{@link ContainsPredicate}</p>
+     * <p>如果未配置，默认返回 AlwaysTrueContainsPredicate</p>
+     * <p>如果有配置：配置 bean 正确，返回配置的 ContainsPredicate；配置 bean 错误，抛出异常 {@link CacheConfigException} </p>
+     */
+    @Perfect
+    private <K> ContainsPredicate<K> getContainsPredicate(Class<K> keyType, CacheProps props) {
+        String beanId = StringUtils.trim(props.getExtension().getContainsPredicate());
+        if (StringUtils.hasLength(beanId) && !Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
+            ContainsPredicateProvider provider = predicateProviders.get(beanId);
+            requireNonNull(provider, () -> "ContainsPredicateProvider:[" + beanId + "] is undefined.");
+            ContainsPredicate<K> predicate = provider.get(keyType, props);
+            requireNonNull(predicate, () -> "Unable to get predicate from provider:[" + beanId + "].");
+            return predicate;
+        }
+        return AlwaysTrueContainsPredicate.getInstance();
+    }
+
+    /**
+     * @param keyType   键 class
+     * @param valueType 值 class
+     * @param props     缓存配置
+     * @param <K>       键类型
+     * @param <V>       键类型
+     * @return cacheMonitors
+     */
+    @Perfect
+    private <K, V> List<CacheMonitor<V>> getCacheMonitors(Class<K> keyType, Class<V> valueType, CacheProps props) {
+        String beanIds = StringUtils.trim(props.getExtension().getCacheMonitors());
+        if (!StringUtils.hasLength(beanIds) || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanIds))) {
+            return new ArrayList<>();
+        }
+        String[] ids = beanIds.split(",");
+        if (ArrayUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        List<CacheMonitor<V>> monitors = new ArrayList<>(ids.length);
+        for (String id : ids) {
+            String beanId = StringUtils.trim(id);
+            if (!StringUtils.hasLength(beanId)) {
+                continue;
+            }
+            CacheMonitorProvider provider = monitorProviders.get(beanId);
+            requireNonNull(provider, () -> "CacheMonitorProvider:[" + beanId + "] is undefined.");
+            CacheMonitor<V> monitor = provider.get(props, keyType, valueType);
+            requireNonNull(monitor, () -> "Unable to get monitor from provider:[" + beanId + "].");
+            monitors.add(monitor);
+        }
+        return monitors;
+    }
+
+    @Perfect
+    private <V> CacheStatMonitor<V> getCacheStatMonitor(CacheProps props) {
+        String beanId = StringUtils.trim(props.getExtension().getCacheStat());
+        if (!StringUtils.hasLength(beanId) || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
+            return null;
+        }
+        CacheStatManager statManager = statProviders.get(beanId);
+        requireNonNull(statManager, () -> "CacheStatManager:[" + beanId + "] is undefined.");
+        CacheStatMonitor<V> monitor = new CacheStatMonitor<>(props.getName(), application);
+        statManager.register(props.getName(), monitor);
+        return monitor;
+    }
+
+    /**
+     * 获取缓存类型
+     *
+     * @param props 缓存配置
+     * @return {@link CacheType} 缓存类型
+     */
+    @Perfect
+    private CacheType getCacheType(CacheProps props) {
+        String cacheType = StringUtils.toUpperCase(props.getCacheType());
+        return CacheType.valueOf(cacheType);
+    }
+
+    @Perfect
+    private KeyConvertor getKeyConvertor(Charset charset, CacheProps props) {
+        String name = props.getName();
+        String beanId = props.getExtension().getKeyConvertor();
+        requireNotEmpty(beanId, () -> "Cache:[" + name + "] \"key-convertor\" must not be null or empty.");
+        KeyConvertorProvider provider = keyConvertorProviders.get(beanId);
+        requireNonNull(provider, () -> "KeyConvertorProvider:[" + beanId + "] is undefined.");
+        KeyConvertor keyConvertor = provider.get(charset);
+        requireNonNull(keyConvertor, () -> "Unable to get keyConvertor from provider:[" + beanId + "].");
+        return keyConvertor;
+    }
+
+    @Perfect
+    private <V> Serializer<V> getValueSerializer(String name, String beanId, Charset charset, Class<V> valueType) {
+        SerializerProvider provider = serializers.get(beanId);
+        requireNonNull(provider, () -> "Cache:[" + name + "] SerializerProvider:[" + beanId + "] is undefined.");
+
+        Serializer<V> serializer = provider.get(name, charset, valueType);
+        requireNonNull(serializer, () -> "Cache:[" + name + "] Unable to get serializer from provider:[" + beanId + "].");
+        return serializer;
+    }
+
+    @Perfect
+    private Compressor getValueCompressor(String beanId) {
+        CompressorProvider provider = compressors.get(beanId);
+        requireNonNull(provider, () -> "CompressorProvider:[" + beanId + "] is undefined.");
+        Compressor compressor = provider.get();
+        requireNonNull(compressor, () -> "Unable to get compressor from provider:[" + beanId + "].");
+        return compressor;
+    }
+
+    @Perfect
+    private <K, V> void cacheSync(CacheProps props, CacheConfig<K, V> config, CacheType cacheType,
+                                  LocalCacheStore localStore) {
+        String syncManagerId = props.getExtension().getCacheSync();
+        CacheSyncManager syncManager = getCacheSyncManager(syncManagerId);
+        if (syncManager != null) {
+            String syncChannel = getCacheSyncChannel(props);
+            CacheMessagePublisher publisher = syncManager.getPublisher(syncChannel);
+            requireNonNull(publisher, () -> "Unable to get publisher from provider:[" + syncManagerId + "].");
+
+            String name = props.getName();
+            Charset charset = config.getCharset();
+            Class<CacheSyncMessage> type = CacheSyncMessage.class;
+            String serializerId = props.getExtension().getCacheSyncSerializer();
+            requireNotEmpty(serializerId, () -> "Cache:[" + name + "] \"cache-sync-serializer\" must not be null or empty.");
+
+            Serializer<CacheSyncMessage> serializer = getValueSerializer(name, serializerId, charset, type);
+            requireNonNull(serializer, () -> "Unable to get serializer from provider:[" + serializerId + "].");
+
+            config.addMonitor(new CacheSyncMonitor<>(sid, syncChannel, cacheType, publisher, serializer));
+            CacheSyncConsumer consumer = new CacheSyncConsumer(sid, localStore, serializer);
+            syncManager.register(syncChannel, consumer);
+        }
+    }
+
+    @Perfect
+    private CacheSyncManager getCacheSyncManager(String beanId) {
+        if (StringUtils.hasLength(beanId) && !Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
+            CacheSyncManager syncManager = syncProviders.get(beanId);
+            requireNonNull(syncManager, () -> "CacheSyncManager:[" + beanId + "] is undefined");
+            return syncManager;
+        }
+        return null;
+    }
+
+    @Perfect
+    private static String getCacheSyncChannel(CacheProps props) {
+        String channel = props.getExtension().getCacheSyncChannel();
+        requireNotEmpty(channel, () -> "Cache:[" + props.getName() + "], \"cache-sync-channel\" must not be null or empty");
+        return channel + CacheConstants.SYNC_CHANNEL_INFIX + props.getName();
+    }
+
+    /**
+     * 准备本地缓存的值的序列化器和压缩器
+     *
+     * @param charset   字符集
+     * @param valueType 值类型 class
+     * @param props     缓存配置
+     * @param config    缓存配置
+     * @param <K>       键类型
+     * @param <V>       值类型
+     */
+    @Perfect
+    private <K, V> void prepareLocalCacheStore(Charset charset, Class<V> valueType, CacheProps props, CacheConfig<K, V> config) {
+        // 添加本地缓存值序列化器 @Perfect
+        if (config.getLocalConfig().isEnableSerializeValue()) {
+            String name = props.getName();
+            String serializer = props.getLocal().getValueSerializer();
+            config.getLocalConfig().setValueSerializer(this.getValueSerializer(name, serializer, charset, valueType));
         }
 
-        CacheProps cacheProps = CacheConfigUtil.copyProperties(userProps, template.clone());
-        cachePropsMap.put(name, cacheProps);
-        return cacheProps;
+        // 添加本地缓存值压缩器 @Perfect
+        if (config.getLocalConfig().isEnableCompressValue()) {
+            config.getLocalConfig().setValueCompressor(this.getValueCompressor(props.getLocal().getValueCompressor()));
+        }
+    }
+
+    @Perfect
+    private <K, V> LocalCacheStore getLocalCacheStore(CacheProps props, CacheConfig<K, V> cacheConfig) {
+        String name = props.getName();
+        String beanId = props.getLocal().getCacheStore();
+        requireNotEmpty(beanId, () -> "Cache:[" + name + "], \"local: cache-store\" must not be null or empty");
+
+        LocalCacheStoreProvider localStoreProvider = localStoreProviders.get(beanId);
+        requireNonNull(localStoreProvider, () -> "LocalCacheStoreProvider:[" + beanId + "] is undefined");
+
+        LocalCacheStore localCacheStore = localStoreProvider.getLocalCacheStore(cacheConfig);
+        requireNonNull(localCacheStore, () -> "Cache:[" + name + "] Unable to get localCacheStore from provider:[" + beanId + "].");
+        return localCacheStore;
+    }
+
+    @Perfect
+    private <K, V> RemoteCacheStore getRemoteCacheStore(CacheProps props, CacheConfig<K, V> config) {
+        String name = props.getName();
+        String beanId = props.getRemote().getCacheStore();
+        requireNotEmpty(beanId, () -> "Cache:[" + name + "], \"remote: cache-store\" must not be null or empty");
+
+        RemoteCacheStoreProvider remoteStoreProvider = remoteStoreProviders.get(beanId);
+        requireNonNull(remoteStoreProvider, () -> "RemoteCacheStoreProvider:[" + beanId + "] is undefined");
+
+        RemoteCacheStore remoteCacheStore = remoteStoreProvider.getRemoteCacheStore(config);
+        requireNonNull(remoteCacheStore, () -> "Cache:[" + name + "] Unable to get remoteCacheStore from provider:[" + beanId + "].");
+        return remoteCacheStore;
+    }
+
+    private static void requireNonNull(Object obj, Supplier<String> errMsg) {
+        if (obj == null) {
+            throw new CacheConfigException(errMsg.get());
+        }
+    }
+
+    private static void requireNotEmpty(String str, Supplier<String> errMsg) {
+        if (!StringUtils.hasLength(str)) {
+            throw new CacheConfigException(errMsg.get());
+        }
     }
 
     @Override
@@ -329,8 +416,40 @@ public class XcacheManager implements CacheManager {
         return Collections.unmodifiableCollection(cacheMap.keySet());
     }
 
+    public void addProvider(String beanId, SerializerProvider provider) {
+        this.serializers.put(beanId, provider);
+    }
+
+    public void addProvider(String beanId, CompressorProvider provider) {
+        this.compressors.put(beanId, provider);
+    }
+
+    public void addProvider(String beanId, CacheSyncManager provider) {
+        this.syncProviders.put(beanId, provider);
+    }
+
+    public void addProvider(String beanId, CacheStatManager provider) {
+        this.statProviders.put(beanId, provider);
+    }
+
+    public void addProvider(String beanId, CacheLockProvider provider) {
+        this.lockProviders.put(beanId, provider);
+    }
+
     public void addProvider(String beanId, CacheMonitorProvider provider) {
         this.monitorProviders.put(beanId, provider);
+    }
+
+    public void addProvider(String beanId, KeyConvertorProvider provider) {
+        this.keyConvertorProviders.put(beanId, provider);
+    }
+
+    public void addProvider(String beanId, ContainsPredicateProvider provider) {
+        this.predicateProviders.put(beanId, provider);
+    }
+
+    public void addProvider(String beanId, LocalCacheStoreProvider provider) {
+        this.localStoreProviders.put(beanId, provider);
     }
 
     public void addProvider(String beanId, RemoteCacheStoreProvider provider) {

@@ -8,7 +8,8 @@ import java.util.Collection;
  */
 public interface CacheManager {
 
-    <K, V> Cache<K, V> getOrCreateCache(String name, Class<K> keyType, Class<V> valueType);
+    // TODO key 泛型， value 泛型
+    <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType);
 
     Collection<Cache<?, ?>> getAll();
 
