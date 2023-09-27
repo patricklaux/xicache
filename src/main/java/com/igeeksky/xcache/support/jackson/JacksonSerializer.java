@@ -20,7 +20,7 @@ import java.util.Objects;
  * @since 0.0.1 2017-03-06
  */
 public class JacksonSerializer<T> implements Serializer<T> {
-    // TODO 泛型处理
+
     private final Charset charset;
     private final JavaType javaType;
     private final ObjectMapper mapper;

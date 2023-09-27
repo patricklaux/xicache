@@ -11,17 +11,13 @@ public abstract class AbstractSerializerProvider implements SerializerProvider {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Serializer<T> get(String name, Charset charset, Class<T> type) {
+    public <T> Serializer<T> get(String name, Charset charset, Class<T> type, Class<?>[] valueParams) {
         if (Objects.equals(String.class, type)) {
             return (Serializer<T>) StringSerializer.getInstance(charset);
         }
-        return doGet(type, charset);
+        return doGet(charset, type, valueParams);
     }
 
-    protected abstract <T> Serializer<T> doGet(Class<T> type, Charset charset);
+    protected abstract <T> Serializer<T> doGet(Charset charset, Class<T> type, Class<?>[] valueParams);
 
-    @Override
-    public void close() throws Exception {
-        // do nothing
-    }
 }

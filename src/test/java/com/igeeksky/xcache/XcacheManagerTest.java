@@ -66,7 +66,7 @@ class XcacheManagerTest {
         cacheManager.addProvider("localCacheLockProvider", LocalCacheLockProvider.getInstance());
         cacheManager.addProvider("caffeineCacheStoreProvider", new CaffeineCacheStoreProvider(null, null));
 
-        cache = cacheManager.getOrCreateCache(name, String.class, User.class);
+        cache = cacheManager.getOrCreateCache(name, String.class, User.class, null);
     }
 
     @AfterEach

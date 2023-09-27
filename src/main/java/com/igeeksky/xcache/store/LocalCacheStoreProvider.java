@@ -1,13 +1,12 @@
 package com.igeeksky.xcache.store;
 
-import com.igeeksky.xcache.Provider;
 import com.igeeksky.xcache.config.CacheConfig;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-18
  */
-public interface LocalCacheStoreProvider extends Provider {
+public interface LocalCacheStoreProvider {
 
     /**
      * 根据配置生成缓存实例

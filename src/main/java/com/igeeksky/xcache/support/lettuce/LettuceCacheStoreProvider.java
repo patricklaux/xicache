@@ -20,12 +20,13 @@ import java.util.Objects;
 public class LettuceCacheStoreProvider implements RemoteCacheStoreProvider {
 
     private final RedisHashWriter redisHashWriter;
-
     private final RedisStringWriter redisStringWriter;
+    private final LettuceConnectionFactory connectionFactory;
 
-    public LettuceCacheStoreProvider(LettuceConnectionManager connectionManager) {
-        this.redisHashWriter = new LettuceRedisHashWriter(connectionManager);
-        this.redisStringWriter = new LettuceRedisStringWriter(connectionManager);
+    public LettuceCacheStoreProvider(LettuceConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
+        this.redisHashWriter = new LettuceRedisHashWriter(connectionFactory);
+        this.redisStringWriter = new LettuceRedisStringWriter(connectionFactory);
     }
 
     @Override
@@ -39,4 +40,8 @@ public class LettuceCacheStoreProvider implements RemoteCacheStoreProvider {
         return new RedisHashCacheStore<>(config, serializer, this.redisHashWriter);
     }
 
+    @Override
+    public void close() throws Exception {
+        this.connectionFactory.close();
+    }
 }

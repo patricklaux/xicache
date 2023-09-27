@@ -43,10 +43,39 @@ xcache:
       template: T0
     - name: order
       template: T0
-  redis:
-    - id:
   stat:
     cache-stat-period: 10000
   sync:
+  lettuce:
+    client:
+      io-threads-size: 4
+      computation-threads-size: 4
+    beans:
+      - id: lettuce
+        database: 0
+        url:
+        host: localhost
+        port: 6379
+        username: redis-admin
+        password: 123456
+        ssl: false
+        read-timeout:
+        connect-timeout:
+        client-name:
+        replica:
+        sentinel:
+          master: mymaster
+          nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+          username: redis-admin
+          password: 123456
+        cluster:
+          nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+          max-redirects: 5
+          refresh:
+            dynamic-refresh-sources: true
+            period: 60000
+            adaptive: true
+
+
 
 

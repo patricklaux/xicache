@@ -6,7 +6,6 @@ package com.igeeksky.xcache.extension.serializer;
  * @author Patrick.Lau
  * @since 0.0.3 2020-12-11
  */
-@SuppressWarnings("serial")
 public class SerializationFailedException extends RuntimeException {
 
     public SerializationFailedException(String msg) {

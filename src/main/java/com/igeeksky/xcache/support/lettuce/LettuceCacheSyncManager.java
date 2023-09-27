@@ -18,9 +18,9 @@ public class LettuceCacheSyncManager implements CacheSyncManager {
 
     private final StatefulRedisPubSubConnection<String, byte[]> pubSubConnection;
 
-    public LettuceCacheSyncManager(LettuceConnectionManager connectionManager) {
+    public LettuceCacheSyncManager(LettuceConnectionFactory factory) {
         this.listener = new LettuceCacheMessageListener();
-        pubSubConnection = connectionManager.getPubSubConnection();
+        pubSubConnection = factory.getPubSubConnection();
         pubSubConnection.addListener(this.listener);
         this.publisher = new LettuceCacheMessagePublisher(pubSubConnection.reactive());
     }

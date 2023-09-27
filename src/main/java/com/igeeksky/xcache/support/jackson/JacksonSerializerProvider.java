@@ -1,8 +1,10 @@
 package com.igeeksky.xcache.support.jackson;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igeeksky.xcache.extension.serializer.AbstractSerializerProvider;
 import com.igeeksky.xcache.extension.serializer.Serializer;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
 
 import java.nio.charset.Charset;
 
@@ -13,8 +15,13 @@ import java.nio.charset.Charset;
 public class JacksonSerializerProvider extends AbstractSerializerProvider {
 
     @Override
-    public <T> Serializer<T> doGet(Class<T> type, Charset charset) {
-        return new JacksonSerializer<>(new ObjectMapper(), type, charset);
+    public <T> Serializer<T> doGet(Charset charset, Class<T> type, Class<?>[] valueParams) {
+        ObjectMapper mapper = new ObjectMapper();
+        if (ArrayUtils.isEmpty(valueParams)) {
+            return new JacksonSerializer<>(mapper, type, charset);
+        }
+        JavaType javaType = mapper.getTypeFactory().constructParametricType(type, valueParams);
+        return new JacksonSerializer<>(mapper, javaType, charset);
     }
 
 }

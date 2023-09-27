@@ -20,6 +20,11 @@ public interface SerializerProvider extends Provider {
      * @param <T>     序列化数据类型
      * @return {@link Serializer<T>} 序列化器
      */
-    <T> Serializer<T> get(String name, Charset charset, Class<T> type);
+    <T> Serializer<T> get(String name, Charset charset, Class<T> type, Class<?>[] valueParams);
+
+    @Override
+    default void close() {
+        // do nothing
+    }
 
 }

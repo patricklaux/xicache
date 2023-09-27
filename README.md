@@ -703,7 +703,77 @@ sequenceDiagram
 	CacheSyncProvider-->>CacheManager: success
 ```
 
+## 缓存配置
 
+```yaml
+xcache:
+  application: shop
+  T0:
+    charset: UTF-8
+    cache-type: both
+    local:
+      cache-store: caffeineCacheStoreProvider
+      store-name: caffeine
+      initial-capacity: 1024
+      maximum-size: 2048
+      maximum-weight: 0
+      key-strength: none
+      value-strength: none
+      expire-after-write: 3600000
+      expire-after-access: 300000
+      enable-random-ttl: true
+      enable-null-value: true
+      value-compressor: gzipCompressorProvider
+      value-serializer: jacksonSerializerProvider
+    remote:
+      cache-store: lettuceCacheStoreProvider
+      store-name: redis-string
+      expire-after-write: 7200000
+      enable-key-prefix: true
+      enable-random-ttl: true
+      enable-null-value: true
+      value-compressor: gzipCompressorProvider
+      value-serializer: jacksonSerializerProvider
+    extension:
+      key-convertor: jacksonKeyConvertorProvider
+      cache-lock: localCacheLockProvider
+      cache-lock-size: 128
+      cache-stat: logCacheStatManager
+      cache-sync: lettuceCacheSyncProvider
+      cache-sync-channel: shop
+      cache-sync-serializer: jacksonKeyConvertorProvider
+      cache-loader: none
+      cache-monitors: none
+      contains-predicate: alwaysTruePredicateProvider
+    metadata:
+  caches:
+    - name: user
+      template: T0
+    - name: order
+      template: T0
+  redis:
+    - id:
+  stat:
+    cache-stat-period: 10000
+  sync:
+```
+
+String 类型：未配置，使用默认配置；none，禁用此配置项。
+
+Number 类型：未配置，使用默认配置；0，禁用此配置项。
+
+Boolean 类型：未配置，使用默认配置。
+
+```mermaid
+sequenceDiagram
+	actor->>CacheManager: 1: create config
+	CacheManager->>DefaultCacheProps: 1.1: 获取默认配置
+	CacheManager->>CacheConfigUtil: 1.2: 获取用户模板配置
+	CacheManager->>CacheConfigUtil: 1.3: 用户模板配置 覆盖 默认配置
+	CacheManager->>CacheConfigUtil: 1.4: 获取用户缓存配置
+	CacheManager->>CacheConfigUtil: 1.4: 用户缓存配置 覆盖 用户模板配置
+	CacheManager->>CacheConfigUtil: 1.4: 用户缓存配置 覆盖 用户模板配置
+```
 
 
 

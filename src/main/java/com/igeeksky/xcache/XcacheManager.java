@@ -73,15 +73,15 @@ public class XcacheManager implements CacheManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType, Class<?>[] valueParams) {
         String name = StringUtils.trim(cacheName);
         requireNonNull(keyType, () -> "keyType must not be null");
         requireNonNull(valueType, () -> "valueType must not be null");
         requireNotEmpty(name, () -> "cacheName must not be null or empty");
-        return (Cache<K, V>) cacheMap.computeIfAbsent(name, k -> createCache(k, keyType, valueType));
+        return (Cache<K, V>) cacheMap.computeIfAbsent(name, k -> createCache(k, keyType, valueType, valueParams));
     }
 
-    private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType) {
+    private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType, Class<?>[] valueParams) {
         // 1. 获取配置 @Perfect
         CacheProps props = this.getOrCreateCacheProps(name);
 
@@ -113,7 +113,7 @@ public class XcacheManager implements CacheManager {
         // TODO 11. 添加 cacheLoader
         if (cacheType == CacheType.LOCAL) {
             // 9. 准备本地缓存的值的序列化器和压缩器
-            prepareLocalCacheStore(charset, valueType, props, config);
+            prepareLocalCacheStore(charset, valueType, valueParams, props, config);
             // 10. 创建本地缓存
             LocalCacheStore localStore = this.getLocalCacheStore(props, config);
             // 11. 添加缓存数据同步
@@ -124,7 +124,7 @@ public class XcacheManager implements CacheManager {
         // 12. 添加远程缓存值序列化
         String remoteSerializer = props.getRemote().getValueSerializer();
         requireNotEmpty(remoteSerializer, () -> "Cache:[" + name + "] remote:\"value-serializer\" must not be null or empty");
-        config.getRemoteConfig().setValueSerializer(this.getValueSerializer(name, remoteSerializer, charset, valueType));
+        config.getRemoteConfig().setValueSerializer(this.getValueSerializer(name, remoteSerializer, charset, valueType, valueParams));
 
         // 13. 添加远程缓存值压缩器
         if (config.getRemoteConfig().isEnableCompressValue()) {
@@ -137,7 +137,7 @@ public class XcacheManager implements CacheManager {
         }
 
         // 15. 创建两级缓存
-        prepareLocalCacheStore(charset, valueType, props, config);
+        prepareLocalCacheStore(charset, valueType, valueParams, props, config);
         LocalCacheStore localStore = this.getLocalCacheStore(props, config);
         RemoteCacheStore remoteStore = this.getRemoteCacheStore(props, config);
         cacheSync(props, config, cacheType, localStore);
@@ -281,11 +281,12 @@ public class XcacheManager implements CacheManager {
     }
 
     @Perfect
-    private <V> Serializer<V> getValueSerializer(String name, String beanId, Charset charset, Class<V> valueType) {
+    private <V> Serializer<V> getValueSerializer(String name, String beanId, Charset charset,
+                                                 Class<V> valueType, Class<?>[] valueParams) {
         SerializerProvider provider = serializers.get(beanId);
         requireNonNull(provider, () -> "Cache:[" + name + "] SerializerProvider:[" + beanId + "] is undefined.");
 
-        Serializer<V> serializer = provider.get(name, charset, valueType);
+        Serializer<V> serializer = provider.get(name, charset, valueType, valueParams);
         requireNonNull(serializer, () -> "Cache:[" + name + "] Unable to get serializer from provider:[" + beanId + "].");
         return serializer;
     }
@@ -315,7 +316,7 @@ public class XcacheManager implements CacheManager {
             String serializerId = props.getExtension().getCacheSyncSerializer();
             requireNotEmpty(serializerId, () -> "Cache:[" + name + "] \"cache-sync-serializer\" must not be null or empty.");
 
-            Serializer<CacheSyncMessage> serializer = getValueSerializer(name, serializerId, charset, type);
+            Serializer<CacheSyncMessage> serializer = getValueSerializer(name, serializerId, charset, type, null);
             requireNonNull(serializer, () -> "Unable to get serializer from provider:[" + serializerId + "].");
 
             config.addMonitor(new CacheSyncMonitor<>(sid, syncChannel, cacheType, publisher, serializer));
@@ -352,12 +353,12 @@ public class XcacheManager implements CacheManager {
      * @param <V>       值类型
      */
     @Perfect
-    private <K, V> void prepareLocalCacheStore(Charset charset, Class<V> valueType, CacheProps props, CacheConfig<K, V> config) {
+    private <K, V> void prepareLocalCacheStore(Charset charset, Class<V> valueType, Class<?>[] valueParams, CacheProps props, CacheConfig<K, V> config) {
         // 添加本地缓存值序列化器 @Perfect
         if (config.getLocalConfig().isEnableSerializeValue()) {
             String name = props.getName();
             String serializer = props.getLocal().getValueSerializer();
-            config.getLocalConfig().setValueSerializer(this.getValueSerializer(name, serializer, charset, valueType));
+            config.getLocalConfig().setValueSerializer(this.getValueSerializer(name, serializer, charset, valueType, valueParams));
         }
 
         // 添加本地缓存值压缩器 @Perfect

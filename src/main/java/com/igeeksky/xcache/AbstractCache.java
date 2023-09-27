@@ -227,7 +227,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         return asyncCache;
     }
 
-
     protected String toStoreKey(K key) {
         return keyConvertor.apply(key);
     }

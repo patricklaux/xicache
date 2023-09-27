@@ -40,7 +40,7 @@ public interface CacheConstants {
     String LOCAL_VALUE_STRENGTH = NONE;
     String LOCAL_VALUE_SERIALIZER = NONE;
     String LOCAL_VALUE_COMPRESSOR = NONE;
-    boolean LOCAL_ENABLE_RANDOM_TTL = false;
+    boolean LOCAL_ENABLE_RANDOM_TTL = true;
     boolean LOCAL_ENABLE_NULL_VALUE = true;
     // 本地缓存默认配置 end
 
@@ -52,7 +52,7 @@ public interface CacheConstants {
     String REMOTE_VALUE_SERIALIZER = "jacksonSerializerProvider";
     String REMOTE_VALUE_COMPRESSOR = "gzipCompressorProvider";
     boolean REMOTE_ENABLE_KEY_PREFIX = true;
-    boolean REMOTE_ENABLE_RANDOM_TTL = false;
+    boolean REMOTE_ENABLE_RANDOM_TTL = true;
     boolean REMOTE_ENABLE_NULL_VALUE = true;
     // 远程缓存默认配置 end
 
