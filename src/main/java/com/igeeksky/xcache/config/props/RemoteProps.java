@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.config.props;
 
+import java.util.StringJoiner;
+
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
@@ -84,4 +86,17 @@ public class RemoteProps implements Cloneable {
         return (RemoteProps) super.clone();
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", "{", "}")
+                .add("cacheStore='" + cacheStore + "'")
+                .add("storeName='" + storeName + "'")
+                .add("expireAfterWrite=" + expireAfterWrite)
+                .add("valueSerializer='" + valueSerializer + "'")
+                .add("valueCompressor='" + valueCompressor + "'")
+                .add("enableKeyPrefix=" + enableKeyPrefix)
+                .add("enableRandomTtl=" + enableRandomTtl)
+                .add("enableNullValue=" + enableNullValue)
+                .toString();
+    }
 }

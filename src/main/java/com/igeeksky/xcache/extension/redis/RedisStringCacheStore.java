@@ -25,12 +25,12 @@ public class RedisStringCacheStore implements RemoteCacheStore {
     private final long expireAfterWriteMin;
 
     private final StringSerializer serializer;
-    private final RedisStringWriter redisWriter;
+    private final RedisConnection redisConnection;
     private final CacheKeyPrefix cacheKeyPrefix;
 
-    public RedisStringCacheStore(CacheConfig<?, ?> config, StringSerializer serializer, RedisStringWriter redisWriter) {
+    public RedisStringCacheStore(CacheConfig<?, ?> config, StringSerializer serializer, RedisConnection connection) {
         this.serializer = serializer;
-        this.redisWriter = redisWriter;
+        this.redisConnection = connection;
         this.enableKeyPrefix = config.getRemoteConfig().isEnableKeyPrefix();
         this.enableRandomTtl = config.getRemoteConfig().isEnableRandomTtl();
         this.expireAfterWrite = config.getRemoteConfig().getExpireAfterWrite();
@@ -40,7 +40,7 @@ public class RedisStringCacheStore implements RemoteCacheStore {
 
     @Override
     public Mono<CacheValue<byte[]>> get(String key) {
-        return Mono.just(key).flatMap(k -> redisWriter.get(toStoreKey(k))).map(CacheValue::new);
+        return Mono.just(key).flatMap(k -> redisConnection.get(toStoreKey(k))).map(CacheValue::new);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class RedisStringCacheStore implements RemoteCacheStore {
                     }
                     return keysArray;
                 })
-                .flatMapMany(redisWriter::mget)
+                .flatMapMany(redisConnection::mget)
                 .filter(KeyValue::hasValue)
                 .map(kv -> new KeyValue<>(fromStoreKey(kv.getKey()), CacheValues.newCacheValue(kv.getValue())));
     }
@@ -64,9 +64,9 @@ public class RedisStringCacheStore implements RemoteCacheStore {
     public Mono<Void> put(String key, Mono<byte[]> value) {
         return value.flatMap(v -> {
             if (expireAfterWrite <= 0) {
-                return redisWriter.set(toStoreKey(key), v);
+                return redisConnection.set(toStoreKey(key), v);
             } else {
-                return redisWriter.psetex(toStoreKey(key), expireAfterWrite, v);
+                return redisConnection.psetex(toStoreKey(key), expireAfterWrite, v);
             }
         });
     }
@@ -77,19 +77,19 @@ public class RedisStringCacheStore implements RemoteCacheStore {
             return keyValues.flatMap(kvs -> {
                 Map<byte[], byte[]> map = new HashMap<>();
                 kvs.forEach((k, v) -> map.put(toStoreKey(k), v));
-                return redisWriter.mset(map);
+                return redisConnection.mset(map);
             });
         }
         return keyValues.flatMap(kvs -> {
             List<ExpiryKeyValue<byte[], byte[]>> expiryKeyValues = new ArrayList<>();
             kvs.forEach((k, v) -> expiryKeyValues.add(new ExpiryKeyValue<>(toStoreKey(k), v, timeToLive())));
-            return redisWriter.mpsetex(expiryKeyValues);
+            return redisConnection.mpsetex(expiryKeyValues);
         });
     }
 
     @Override
     public Mono<Void> remove(String key) {
-        return redisWriter.del(toStoreKey(key)).then();
+        return redisConnection.del(toStoreKey(key)).then();
     }
 
     @Override
@@ -104,7 +104,7 @@ public class RedisStringCacheStore implements RemoteCacheStore {
                     }
                     return keysArray;
                 })
-                .flatMap(redisWriter::del)
+                .flatMap(redisConnection::del)
                 .then();
     }
 

@@ -8,5 +8,9 @@ package com.igeeksky.xcache.common;
  */
 public interface Provider extends AutoCloseable {
 
+    // TODO 其它 Provider 实现此方法
+    default String getId() {
+        return null;
+    }
 
 }

@@ -2,6 +2,7 @@ package com.igeeksky.xcache.config.props;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * @author Patrick.Lau
@@ -108,5 +109,19 @@ public class CacheProps implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException("clone operation is not support.", e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", "{", "}")
+                .add("name='" + name + "'")
+                .add("template='" + template + "'")
+                .add("charset='" + charset + "'")
+                .add("cacheType='" + cacheType + "'")
+                .add("local=" + local)
+                .add("remote=" + remote)
+                .add("extension=" + extension)
+                .add("metadata=" + metadata)
+                .toString();
     }
 }

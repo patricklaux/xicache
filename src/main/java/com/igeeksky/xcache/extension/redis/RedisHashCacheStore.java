@@ -35,20 +35,16 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
 
     private final StringSerializer serializer;
 
-    private final RedisHashWriter redisHashWriter;
+    private final RedisConnection connection;
 
     private final CacheKeyPrefix cacheKeyPrefix;
 
-    public RedisHashCacheStore(CacheConfig<K, V> config, StringSerializer serializer, RedisHashWriter redisHashWriter) {
+    public RedisHashCacheStore(CacheConfig<K, V> config, StringSerializer serializer, RedisConnection connection) {
         this.serializer = serializer;
-        this.redisHashWriter = redisHashWriter;
+        this.connection = connection;
         this.name = serializer.serialize(config.getName());
         this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), config.getCharset(), serializer);
-        if (redisHashWriter.isCluster()) {
-            this.redisHashKeys = initHashKeys();
-        } else {
-            this.redisHashKeys = null;
-        }
+        this.redisHashKeys = (connection.isCluster()) ? initHashKeys() : null;
     }
 
     /**
@@ -59,6 +55,7 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
      * @return 16384个哈希表名（cache-name::1, cache-name::2……）
      */
     private byte[][] initHashKeys() {
+        // TODO 数值可配置
         int length = 16384;
         byte[][] keys = new byte[length][];
         for (int i = 0; i < length; i++) {
@@ -72,17 +69,17 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
         return Mono.just(key)
                 .map(this::toStoreKey)
                 .flatMap(k -> {
-                    if (redisHashWriter.isCluster()) {
-                        return redisHashWriter.hget(selectHashKey(k), toStoreKey(key));
+                    if (connection.isCluster()) {
+                        return connection.hget(selectHashKey(k), toStoreKey(key));
                     }
-                    return redisHashWriter.hget(name, toStoreKey(key));
+                    return connection.hget(name, toStoreKey(key));
                 })
                 .map(CacheValues::newCacheValue);
     }
 
     @Override
     public Flux<KeyValue<String, CacheValue<byte[]>>> getAll(Set<? extends String> keys) {
-        if (redisHashWriter.isCluster()) {
+        if (connection.isCluster()) {
             return Mono.just(keys)
                     .map(ks -> {
                         Map<byte[], List<byte[]>> keyListMap = new HashMap<>();
@@ -99,7 +96,7 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
                         byte[] hashKey = entry.getKey();
                         List<byte[]> fields = entry.getValue();
                         int size = fields.size();
-                        return redisHashWriter.hmget(hashKey, fields.toArray(new byte[size][]));
+                        return connection.hmget(hashKey, fields.toArray(new byte[size][]));
                     })
                     .filter(KeyValue::hasValue)
                     .map(kv -> new KeyValue<>(fromStoreKey(kv.getKey()), CacheValues.newCacheValue(kv.getValue())));
@@ -110,7 +107,7 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
                     List<byte[]> fields = new ArrayList<>(ks.size());
                     ks.forEach(k -> fields.add(toStoreKey(k)));
                     int size = fields.size();
-                    return redisHashWriter.hmget(name, fields.toArray(new byte[size][]));
+                    return connection.hmget(name, fields.toArray(new byte[size][]));
                 })
                 .filter(KeyValue::hasValue)
                 .map(kv -> new KeyValue<>(fromStoreKey(kv.getKey()), CacheValues.newCacheValue(kv.getValue())));
@@ -119,17 +116,17 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
     @Override
     public Mono<Void> put(String key, Mono<byte[]> value) {
         return value.flatMap(v -> {
-                    if (redisHashWriter.isCluster()) {
-                        return redisHashWriter.hset(selectHashKey(v), toStoreKey(key), v);
+                    if (connection.isCluster()) {
+                        return connection.hset(selectHashKey(v), toStoreKey(key), v);
                     }
-                    return redisHashWriter.hset(name, toStoreKey(key), v);
+                    return connection.hset(name, toStoreKey(key), v);
                 })
                 .then();
     }
 
     @Override
     public Mono<Void> putAll(Mono<Map<? extends String, ? extends byte[]>> keyValues) {
-        if (redisHashWriter.isCluster()) {
+        if (connection.isCluster()) {
             keyValues.map(kvs -> {
                         Map<byte[], Map<byte[], byte[]>> hashKeyMap = new HashMap<>(kvs.size());
                         for (Map.Entry<? extends String, ? extends byte[]> entry : kvs.entrySet()) {
@@ -143,14 +140,14 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
                         return hashKeyMap.entrySet();
                     })
                     .flatMapMany(Flux::fromIterable)
-                    .flatMap(entry -> redisHashWriter.hmset(entry.getKey(), entry.getValue()))
+                    .flatMap(entry -> connection.hmset(entry.getKey(), entry.getValue()))
                     .then();
         }
 
         return keyValues.flatMap(kvs -> {
             Map<byte[], byte[]> map = new HashMap<>(kvs.size());
             kvs.forEach((k, v) -> map.put(toStoreKey(k), v));
-            return redisHashWriter.hmset(name, map);
+            return connection.hmset(name, map);
         });
     }
 
@@ -159,17 +156,17 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
         return Mono.just(key)
                 .map(this::toStoreKey)
                 .flatMap(field -> {
-                    if (redisHashWriter.isCluster()) {
-                        return redisHashWriter.hdel(selectHashKey(field), field);
+                    if (connection.isCluster()) {
+                        return connection.hdel(selectHashKey(field), field);
                     }
-                    return redisHashWriter.hdel(name, field);
+                    return connection.hdel(name, field);
                 })
                 .then();
     }
 
     @Override
     public Mono<Void> removeAll(Set<? extends String> keys) {
-        if (redisHashWriter.isCluster()) {
+        if (connection.isCluster()) {
             return Mono.just(keys)
                     .map(ks -> {
                         Map<byte[], List<byte[]>> keyListMap = new HashMap<>();
@@ -186,7 +183,7 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
                         byte[] hashKey = entry.getKey();
                         List<byte[]> fields = entry.getValue();
                         int size = fields.size();
-                        return redisHashWriter.hdel(hashKey, fields.toArray(new byte[size][]));
+                        return connection.hdel(hashKey, fields.toArray(new byte[size][]));
                     })
                     .then();
         }
@@ -196,7 +193,7 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
                     List<byte[]> fields = new ArrayList<>(ks.size());
                     ks.forEach(k -> fields.add(toStoreKey(k)));
                     int size = fields.size();
-                    return redisHashWriter.hdel(name, fields.toArray(new byte[size][])).then();
+                    return connection.hdel(name, fields.toArray(new byte[size][])).then();
                 })
                 .then();
     }

@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.config.props;
 
+import java.util.StringJoiner;
+
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
@@ -102,4 +104,19 @@ public class ExtensionProps implements Cloneable {
         return (ExtensionProps) super.clone();
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", "{", "}")
+                .add("keyConvertor='" + keyConvertor + "'")
+                .add("cacheLock='" + cacheLock + "'")
+                .add("cacheLockSize=" + cacheLockSize)
+                .add("containsPredicate='" + containsPredicate + "'")
+                .add("cacheSync='" + cacheSync + "'")
+                .add("cacheSyncChannel='" + cacheSyncChannel + "'")
+                .add("cacheSyncSerializer='" + cacheSyncSerializer + "'")
+                .add("cacheStat='" + cacheStat + "'")
+                .add("cacheLoader='" + cacheLoader + "'")
+                .add("cacheMonitors='" + cacheMonitors + "'")
+                .toString();
+    }
 }

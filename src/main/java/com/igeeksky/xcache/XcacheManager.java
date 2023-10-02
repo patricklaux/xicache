@@ -1,6 +1,7 @@
 package com.igeeksky.xcache;
 
 import com.igeeksky.xcache.common.CacheType;
+import com.igeeksky.xcache.common.Provider;
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.config.CacheConfigException;
 import com.igeeksky.xcache.config.CacheConfigUtil;
@@ -417,6 +418,12 @@ public class XcacheManager implements CacheManager {
         return Collections.unmodifiableCollection(cacheMap.keySet());
     }
 
+    public void addProvider(String beanId, Provider provider) {
+        if (provider instanceof RemoteCacheStoreProvider) {
+            addProvider(beanId, (RemoteCacheStoreProvider) provider);
+        }
+    }
+
     public void addProvider(String beanId, SerializerProvider provider) {
         this.serializers.put(beanId, provider);
     }
@@ -456,5 +463,4 @@ public class XcacheManager implements CacheManager {
     public void addProvider(String beanId, RemoteCacheStoreProvider provider) {
         this.remoteStoreProviders.put(beanId, provider);
     }
-
 }

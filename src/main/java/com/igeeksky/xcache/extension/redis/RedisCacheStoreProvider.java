@@ -1,10 +1,7 @@
-package com.igeeksky.xcache.support.lettuce;
+package com.igeeksky.xcache.extension.redis;
 
 import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.extension.redis.RedisHashCacheStore;
-import com.igeeksky.xcache.extension.redis.RedisHashWriter;
-import com.igeeksky.xcache.extension.redis.RedisStringCacheStore;
-import com.igeeksky.xcache.extension.redis.RedisStringWriter;
+import com.igeeksky.xcache.extension.redis.*;
 import com.igeeksky.xcache.extension.serializer.StringSerializer;
 import com.igeeksky.xcache.store.RemoteCacheStore;
 import com.igeeksky.xcache.store.RemoteCacheStoreProvider;
@@ -17,16 +14,15 @@ import java.util.Objects;
  * @author Patrick.Lau
  * @since 0.0.3 2021-07-27
  */
-public class LettuceCacheStoreProvider implements RemoteCacheStoreProvider {
+public class RedisCacheStoreProvider implements RemoteCacheStoreProvider {
 
-    private final RedisHashWriter redisHashWriter;
-    private final RedisStringWriter redisStringWriter;
-    private final LettuceConnectionFactory connectionFactory;
+    private final RedisConnection redisConnection;
 
-    public LettuceCacheStoreProvider(LettuceConnectionFactory connectionFactory) {
+    private final RedisConnectionFactory connectionFactory;
+
+    public RedisCacheStoreProvider(RedisConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
-        this.redisHashWriter = new LettuceRedisHashWriter(connectionFactory);
-        this.redisStringWriter = new LettuceRedisStringWriter(connectionFactory);
+        this.redisConnection = connectionFactory.getConnection();
     }
 
     @Override
@@ -35,9 +31,9 @@ public class LettuceCacheStoreProvider implements RemoteCacheStoreProvider {
         StringSerializer serializer = StringSerializer.getInstance(charset);
         String storeName = StringUtils.toLowerCase(config.getRemoteConfig().getStoreName());
         if (storeName == null || Objects.equals(storeName, RedisStringCacheStore.STORE_NAME)) {
-            return new RedisStringCacheStore(config, serializer, this.redisStringWriter);
+            return new RedisStringCacheStore(config, serializer, this.redisConnection);
         }
-        return new RedisHashCacheStore<>(config, serializer, this.redisHashWriter);
+        return new RedisHashCacheStore<>(config, serializer, this.redisConnection);
     }
 
     @Override

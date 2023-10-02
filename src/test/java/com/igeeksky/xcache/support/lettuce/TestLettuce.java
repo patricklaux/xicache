@@ -4,16 +4,16 @@ import io.lettuce.core.*;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.masterreplica.MasterReplica;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
-import io.netty.resolver.DefaultAddressResolverGroup;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Patrick.Lau
@@ -33,7 +33,6 @@ public class TestLettuce {
     private String host = "localhost";
     private int port = 6379;
     private int database = 0;
-
     // Standalone ---end
 
     // Sentinel ---start
@@ -53,17 +52,12 @@ public class TestLettuce {
 
     @Test
     void testStandalone() {
-        // 创建 ClientResources
-        ClientResources res = clientResources();
         // 创建 RedisURI
-        RedisURI.Builder uriBuilder = RedisURI.builder();
-        uriBuilder = uriBuilder
+        RedisURI.Builder uriBuilder = RedisURI.Builder
+                .redis(host, port)
                 .withClientName(clientName)
-                .withHost(host)
-                .withPort(port)
                 .withDatabase(database)
                 .withAuthentication(username, password)
-                .withSentinelMasterId(master)
                 .withTimeout(Duration.ofMillis(timeout))
                 .withSsl(ssl)
                 .withStartTls(startTls)
@@ -86,6 +80,9 @@ public class TestLettuce {
                 .timeoutOptions(TimeoutOptions.create())
                 .publishOnScheduler(false)
                 .build();
+
+        // 创建 ClientResources
+        ClientResources res = clientResources();
         RedisClient redisClient = RedisClient.create(res, redisURI);
         redisClient.setOptions(clientOptions);
     }
@@ -98,9 +95,9 @@ public class TestLettuce {
         // 创建 RedisURI
         RedisURI.Builder uriBuilder = RedisURI.Builder
                 .sentinel(host, port, master)
-                .withDatabase(database)
-                .withAuthentication(username, password)
                 .withClientName(clientName)
+                .withDatabase(database)
+                .withAuthentication(username, password)     // 需判断用户名是否为空
                 .withSsl(ssl)
                 .withStartTls(startTls)
                 .withTimeout(Duration.ofMillis(timeout))
@@ -111,8 +108,8 @@ public class TestLettuce {
             String[] split = node.split(":");
             uriBuilder.withSentinel(split[0], Integer.parseInt(split[1]));
         }
-
         RedisURI redisURI = uriBuilder.build();
+
         ClientOptions clientOptions = ClientOptions.builder()
                 .pingBeforeActivateConnection(false)
                 .autoReconnect(false)
@@ -133,9 +130,6 @@ public class TestLettuce {
     }
 
     void testCluster() {
-        // 创建 ClientResources （Netty IO及线程设置）
-        ClientResources res = clientResources();
-
         // 创建 ClusterTopologyRefreshOptions （集群拓扑信息刷新）
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .enablePeriodicRefresh(false)
@@ -148,17 +142,27 @@ public class TestLettuce {
                 .closeStaleConnections(true)
                 .build();
 
+        // 创建 ClientResources （Netty IO及线程设置）
+        ClientResources res = clientResources();
+
         // 创建集群 URI
+        List<RedisURI> redisURIS = new ArrayList<>();
+        String[] array = nodes.split(",");
+        for (String node : array) {
+            String[] hostAndPort = node.split(":");
+            RedisURI redisURI = RedisURI.create(hostAndPort[0], Integer.parseInt(hostAndPort[1]));
+            // 设置密码等
+            redisURIS.add(redisURI);
+        }
 
-
-        RedisClusterClient redisClusterClient = RedisClusterClient.create(res, new ArrayList<>());
+        RedisClusterClient redisClusterClient = RedisClusterClient.create(res, redisURIS);
         redisClusterClient.setOptions(ClusterClientOptions.builder()
                 .topologyRefreshOptions(topologyRefreshOptions) // cluster
                 .maxRedirects(5)                                // cluster
                 .nodeFilter(null)                               // cluster
                 .validateClusterNodeMembership(true)            // cluster
                 .pingBeforeActivateConnection(false)
-                .autoReconnect(false)
+                .autoReconnect(true)
                 .cancelCommandsOnReconnectFailure(false)
                 //.decodeBufferPolicy()
                 .suspendReconnectOnProtocolFailure(false)
@@ -173,13 +177,25 @@ public class TestLettuce {
                 .build());
     }
 
-    @ConditionalOnMissingBean(ClientResources.class)
     private ClientResources clientResources() {
-        DefaultClientResources.Builder resBuilder = DefaultClientResources.builder();
-        return resBuilder.ioThreadPoolSize(ioThreadPoolSize)
-                .computationThreadPoolSize(computationThreadPoolSize)
-                .addressResolverGroup(DefaultAddressResolverGroup.INSTANCE)
-                .build();
+        return DefaultClientResources.builder().build();
+        // DefaultClientResources.Builder builder = DefaultClientResources.builder();
+        // return builder.ioThreadPoolSize(ioThreadPoolSize)
+        //         .computationThreadPoolSize(computationThreadPoolSize)
+        //         //.addressResolverGroup(DefaultAddressResolverGroup.INSTANCE)
+        //         //.commandLatencyRecorder(new DefaultCommandLatencyCollector())
+        //         .commandLatencyPublisherOptions()
+        //         .dnsResolver()
+        //         .eventBus()
+        //         .eventLoopGroupProvider()
+        //         .eventExecutorGroup()
+        //         .nettyCustomizer()
+        //         .reconnectDelay()
+        //         .socketAddressResolver()
+        //         .threadFactoryProvider()
+        //         .timer()
+        //         .tracing()
+        //         .build();
     }
 
 }

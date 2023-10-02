@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.extension.redis.config.props;
 
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * @author Patrick.Lau
@@ -46,5 +47,15 @@ public class Sentinel {
 
     public void setNodes(List<String> nodes) {
         this.nodes = nodes;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", "{", "}")
+                .add("username='" + username + "'")
+                .add("password='" + password + "'")
+                .add("master='" + master + "'")
+                .add("nodes=" + nodes)
+                .toString();
     }
 }

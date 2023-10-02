@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.support.lettuce;
 
+import com.igeeksky.xcache.common.Provider;
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -17,7 +18,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-17
  */
-public class LettuceConnectionFactory implements AutoCloseable {
+public class LettuceConnectionFactory implements Provider {
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -120,8 +121,7 @@ public class LettuceConnectionFactory implements AutoCloseable {
         if (closeable != null) {
             try {
                 closeable.close();
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
+            } catch (Throwable ignored) {
             }
         }
     }

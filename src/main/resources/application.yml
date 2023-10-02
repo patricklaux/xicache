@@ -1,6 +1,6 @@
 xcache:
   application: shop
-  T0:
+  t0:
     charset: UTF-8
     cache-type: both
     local:
@@ -38,43 +38,59 @@ xcache:
       cache-monitors: none
       contains-predicate: alwaysTruePredicateProvider
     metadata:
+      s: s
   caches:
     - name: user
-      template: T0
+      template: t0
     - name: order
-      template: T0
-  stat:
-    cache-stat-period: 10000
-  sync:
-  lettuce:
-    client:
-      io-threads-size: 4
-      computation-threads-size: 4
-    beans:
-      - id: lettuce
-        database: 0
-        url:
-        host: localhost
-        port: 6379
-        username: redis-admin
-        password: 123456
-        ssl: false
-        read-timeout:
-        connect-timeout:
-        client-name:
-        replica:
-        sentinel:
-          master: mymaster
-          nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+      template: t0
+  stats:
+    - id: s
+      cache-stat-period: 10000
+  syncs:
+    - id: s
+  locks:
+    - id: s
+
+
+  redis:
+    lettuce:
+      client-resources:
+        io-threads-size: 4
+        computation-threads-size: 4
+      stores:
+        - id: lettuceCacheStoreProvider
+          connection: lettuceConnectionFactory
+      syncs:
+        - id: lettuceCacheSyncProvider
+          connection: lettuceConnectionFactory
+      connections:
+        - id: lettuceConnectionFactory
+          database: 0
+          host: localhost
+          port: 6379
           username: redis-admin
           password: 123456
-        cluster:
-          nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
-          max-redirects: 5
-          refresh:
-            dynamic-refresh-sources: true
-            period: 60000
-            adaptive: true
+          ssl: false
+          read-timeout:
+          connect-timeout:
+          client-name:
+          replicas:
+          read-from:
+          redis-type: single
+          client-options:
+          sentinel:
+            master: mymaster
+            nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+            username: redis-admin
+            password: 123456
+          cluster:
+            nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+            max-redirects: 5
+            refresh:
+              dynamic-refresh-sources: true
+              period: 60000
+              adaptive: true
 
 
 

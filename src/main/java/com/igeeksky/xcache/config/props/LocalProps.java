@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.config.props;
 
+import java.util.StringJoiner;
+
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
@@ -127,5 +129,24 @@ public class LocalProps implements Cloneable {
     @Override
     public LocalProps clone() throws CloneNotSupportedException {
         return (LocalProps) super.clone();
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", "{", "}")
+                .add("cacheStore='" + cacheStore + "'")
+                .add("storeName='" + storeName + "'")
+                .add("initialCapacity=" + initialCapacity)
+                .add("maximumSize=" + maximumSize)
+                .add("maximumWeight=" + maximumWeight)
+                .add("expireAfterWrite=" + expireAfterWrite)
+                .add("expireAfterAccess=" + expireAfterAccess)
+                .add("keyStrength='" + keyStrength + "'")
+                .add("valueStrength='" + valueStrength + "'")
+                .add("valueSerializer='" + valueSerializer + "'")
+                .add("valueCompressor='" + valueCompressor + "'")
+                .add("enableRandomTtl=" + enableRandomTtl)
+                .add("enableNullValue=" + enableNullValue)
+                .toString();
     }
 }
