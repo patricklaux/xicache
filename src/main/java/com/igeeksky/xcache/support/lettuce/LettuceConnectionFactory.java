@@ -1,129 +1,99 @@
 package com.igeeksky.xcache.support.lettuce;
 
-import com.igeeksky.xcache.common.Provider;
-import io.lettuce.core.AbstractRedisClient;
+import com.igeeksky.xcache.autoconfigure.redis.lettuce.RedisType;
+import com.igeeksky.xcache.extension.redis.RedisConnectionFactory;
+import com.igeeksky.xcache.extension.redis.config.RedisGenericConfig;
+import com.igeeksky.xcache.extension.redis.config.RedisNode;
+import com.igeeksky.xcache.extension.redis.config.RedisStandaloneConfig;
+import com.igeeksky.xtool.core.collection.CollectionUtils;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.cluster.RedisClusterClient;
-import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.masterreplica.MasterReplica;
+import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.core.resource.ClientResources;
 
-import java.nio.charset.Charset;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Patrick.Lau
- * @since 0.0.4 2023-09-17
+ * @since 0.0.4 2023-10-01
  */
-public class LettuceConnectionFactory implements Provider {
+public class LettuceConnectionFactory implements RedisConnectionFactory {
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final ClientOptions options;
+    private final ClientResources resources;
+    private final RedisStandaloneConfig config;
 
-    private final boolean cluster;
-    private final Charset charset;
+    private final StatefulRedisConnection<byte[], byte[]> connection;
 
-    private final RedisReactiveCommands<byte[], byte[]> redisReactiveCommands;
-    private final RedisReactiveCommands<byte[], byte[]> bashRedisReactiveCommands;
-    private final RedisClusterReactiveCommands<byte[], byte[]> clusterReactiveCommands;
-    private final RedisClusterReactiveCommands<byte[], byte[]> bashClusterReactiveCommands;
+    private final StatefulRedisConnection<byte[], byte[]> bashConnection;
 
-    private final AbstractRedisClient abstractRedisClient;
-    private final StatefulRedisConnection<byte[], byte[]> redisConnection;
-    private final StatefulRedisConnection<byte[], byte[]> bashRedisConnection;
-    private final StatefulRedisClusterConnection<byte[], byte[]> clusterConnection;
-    private final StatefulRedisClusterConnection<byte[], byte[]> bashClusterConnection;
-    private volatile StatefulRedisPubSubConnection<String, byte[]> pubSubConnection;
+    public LettuceConnectionFactory(RedisStandaloneConfig config, ClientOptions options, ClientResources resources) {
+        this.config = config;
+        this.options = options;
+        this.resources = resources;
+        this.connection = createConnection(config);
+        this.bashConnection = createConnection(config);
+        this.bashConnection.setAutoFlushCommands(false);
+    }
 
-    public LettuceConnectionFactory(AbstractRedisClient abstractRedisClient, Charset charset) {
-        // TODO 传入配置文件，然后生成连接（单点，主从，哨兵, 集群配置）
-        this.charset = charset;
-        this.abstractRedisClient = abstractRedisClient;
-        if (abstractRedisClient instanceof RedisClusterClient) {
-            this.cluster = true;
-            RedisClusterClient redisClusterClient = (RedisClusterClient) abstractRedisClient;
-            this.clusterConnection = redisClusterClient.connect(ByteArrayCodec.INSTANCE);
-            this.clusterReactiveCommands = this.clusterConnection.reactive();
-            this.bashClusterConnection = redisClusterClient.connect(ByteArrayCodec.INSTANCE);
-            this.bashClusterConnection.setAutoFlushCommands(false);
-            this.bashClusterReactiveCommands = bashClusterConnection.reactive();
-            this.redisConnection = null;
-            this.redisReactiveCommands = null;
-            this.bashRedisConnection = null;
-            this.bashRedisReactiveCommands = null;
-        } else {
-            this.cluster = false;
-            RedisClient redisClient = (RedisClient) abstractRedisClient;
-            this.redisConnection = redisClient.connect(ByteArrayCodec.INSTANCE);
-            this.redisReactiveCommands = this.redisConnection.reactive();
-            this.bashRedisConnection = redisClient.connect(ByteArrayCodec.INSTANCE);
-            this.bashRedisConnection.setAutoFlushCommands(false);
-            this.bashRedisReactiveCommands = this.bashRedisConnection.reactive();
-            this.clusterConnection = null;
-            this.clusterReactiveCommands = null;
-            this.bashClusterConnection = null;
-            this.bashClusterReactiveCommands = null;
+    private StatefulRedisConnection<byte[], byte[]> createConnection(RedisStandaloneConfig config) {
+        RedisType redisType = config.getRedisType();
+        RedisGenericConfig generic = config.getGeneric();
+        RedisClient redisClient = RedisClient.create(resources);
+        redisClient.setOptions(options);
+        RedisURI redisURI = LettuceHelper.redisURI(generic, config.getHost(), config.getPort());
+        // 创建 Standalone[单点连接]
+        if (RedisType.SINGLE == redisType) {
+            return redisClient.connect(ByteArrayCodec.INSTANCE, redisURI);
         }
-    }
 
-    public boolean isCluster() {
-        return cluster;
-    }
-
-    public RedisReactiveCommands<byte[], byte[]> getRedisReactiveCommands() {
-        return redisReactiveCommands;
-    }
-
-    public RedisReactiveCommands<byte[], byte[]> getBashRedisReactiveCommands() {
-        return bashRedisReactiveCommands;
-    }
-
-    public RedisClusterReactiveCommands<byte[], byte[]> getClusterReactiveCommands() {
-        return clusterReactiveCommands;
-    }
-
-    public RedisClusterReactiveCommands<byte[], byte[]> getBashClusterReactiveCommands() {
-        return bashClusterReactiveCommands;
-    }
-
-    public StatefulRedisPubSubConnection<String, byte[]> getPubSubConnection() {
-        if (pubSubConnection == null) {
-            ComposedRedisCodec redisCodec = ComposedRedisCodec.getInstance(charset);
-            lock.lock();
-            try {
-                if (pubSubConnection == null) {
-                    if (abstractRedisClient instanceof RedisClient) {
-                        pubSubConnection = ((RedisClient) abstractRedisClient).connectPubSub(redisCodec);
-                    } else {
-                        pubSubConnection = ((RedisClusterClient) abstractRedisClient).connectPubSub(redisCodec);
-                    }
-                }
-            } finally {
-                lock.unlock();
-            }
+        // 创建 Standalone[主从连接]，未配置副本节点，通过主节点发现副本
+        List<RedisNode> replicas = config.getReplicas();
+        if (CollectionUtils.isEmpty(replicas)) {
+            StatefulRedisMasterReplicaConnection<byte[], byte[]> connect = MasterReplica.connect(redisClient, ByteArrayCodec.INSTANCE, redisURI);
+            connect.setReadFrom(ReadFrom.valueOf(config.getReadFrom()));
+            return connect;
         }
-        return pubSubConnection;
+
+        List<RedisURI> redisURIS = new ArrayList<>();
+        redisURIS.add(redisURI);
+        for (RedisNode replica : replicas) {
+            redisURIS.add(LettuceHelper.redisURI(generic, replica.getHost(), replica.getPort()));
+        }
+
+        StatefulRedisMasterReplicaConnection<byte[], byte[]> connect = MasterReplica.connect(redisClient, ByteArrayCodec.INSTANCE, redisURIS);
+        connect.setReadFrom(ReadFrom.valueOf(config.getReadFrom()));
+        return connect;
     }
 
     @Override
-    public void close() {
-        close(redisConnection);
-        close(bashRedisConnection);
-        close(pubSubConnection);
-        close(clusterConnection);
-        close(bashClusterConnection);
-        abstractRedisClient.shutdown();
+    public LettuceConnection getConnection() {
+        return new LettuceConnection(this.connection, this.bashConnection);
     }
 
-    private static void close(AutoCloseable closeable) {
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (Throwable ignored) {
-            }
-        }
+    @Override
+    public LettucePubSubConnection getPubSubConnection() {
+        StatefulRedisPubSubConnection<String, byte[]> pubSubConnection = createPubSubConnection(config);
+        return new LettucePubSubConnection(pubSubConnection);
     }
 
+    private StatefulRedisPubSubConnection<String, byte[]> createPubSubConnection(RedisStandaloneConfig config) {
+        RedisClient redisClient = RedisClient.create(resources);
+        redisClient.setOptions(options);
+        RedisURI redisURI = LettuceHelper.redisURI(config.getGeneric(), config.getHost(), config.getPort());
+        return redisClient.connectPubSub(ComposedRedisCodec.getInstance(config.getCharset()), redisURI);
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.connection.close();
+        this.bashConnection.close();
+    }
 }

@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.redis;
+package com.igeeksky.xcache.extension.redis.config;
 
 /**
  * @author Patrick.Lau
@@ -6,11 +6,14 @@ package com.igeeksky.xcache.extension.redis;
  */
 public class RedisNode {
 
-    private String host;
+    private final String host;
 
-    private int port;
+    private final int port;
 
-    public RedisNode() {
+    public RedisNode(String node) {
+        String[] hostAndPort = node.split(":");
+        this.host = hostAndPort[0];
+        this.port = Integer.parseInt(hostAndPort[1]);
     }
 
     public RedisNode(String host, int port) {
@@ -22,15 +25,8 @@ public class RedisNode {
         return host;
     }
 
-    public void setHost(String host) {
-        this.host = host;
-    }
-
     public int getPort() {
         return port;
     }
 
-    public void setPort(int port) {
-        this.port = port;
-    }
 }

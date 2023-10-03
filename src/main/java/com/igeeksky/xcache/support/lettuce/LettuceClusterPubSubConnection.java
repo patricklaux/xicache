@@ -5,6 +5,7 @@ import com.igeeksky.xcache.extension.redis.RedisPubSubListener;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
 import reactor.core.publisher.Mono;
+import redis.clients.jedis.util.IOUtils;
 
 /**
  * @author Patrick.Lau
@@ -74,4 +75,8 @@ public class LettuceClusterPubSubConnection implements RedisPubSubConnection {
         });
     }
 
+    @Override
+    public void close() throws Exception {
+
+    }
 }

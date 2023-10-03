@@ -1,21 +1,14 @@
 package com.igeeksky.xcache.extension.redis.config;
 
-import com.igeeksky.xcache.extension.redis.config.props.Cluster;
 import io.lettuce.core.SslVerifyMode;
-import io.lettuce.core.cluster.ClusterClientOptions;
-import io.lettuce.core.resource.ClientResources;
-
-import java.nio.charset.Charset;
 
 /**
  * @author Patrick.Lau
- * @since 0.0.4 2023-09-26
+ * @since 0.0.4 2023-10-02
  */
-public class ClusterConfig {
+public class RedisGenericConfig {
 
-    private String id;
-
-    private Charset charset;
+    private int database = 0;
 
     private String username;
 
@@ -23,38 +16,22 @@ public class ClusterConfig {
 
     private String clientName;
 
-    private long timeout;
+    private long timeout = 60000;
 
-    private boolean ssl;
+    private boolean ssl = false;
 
-    private boolean startTls;
+    private boolean startTls = false;
 
     private boolean verifyPeer;
 
     private SslVerifyMode sslVerifyMode;
 
-    private String readFrom;
-
-    private Cluster cluster;
-
-    private ClusterClientOptions clientOptions;
-
-    private ClientResources clientResources;
-
-    public String getId() {
-        return id;
+    public int getDatabase() {
+        return database;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Charset getCharset() {
-        return charset;
-    }
-
-    public void setCharset(Charset charset) {
-        this.charset = charset;
+    public void setDatabase(int database) {
+        this.database = database;
     }
 
     public String getUsername() {
@@ -119,38 +96,6 @@ public class ClusterConfig {
 
     public void setSslVerifyMode(SslVerifyMode sslVerifyMode) {
         this.sslVerifyMode = sslVerifyMode;
-    }
-
-    public String getReadFrom() {
-        return readFrom;
-    }
-
-    public void setReadFrom(String readFrom) {
-        this.readFrom = readFrom;
-    }
-
-    public Cluster getCluster() {
-        return cluster;
-    }
-
-    public void setCluster(Cluster cluster) {
-        this.cluster = cluster;
-    }
-
-    public ClusterClientOptions getClientOptions() {
-        return clientOptions;
-    }
-
-    public void setClientOptions(ClusterClientOptions clientOptions) {
-        this.clientOptions = clientOptions;
-    }
-
-    public ClientResources getClientResources() {
-        return clientResources;
-    }
-
-    public void setClientResources(ClientResources clientResources) {
-        this.clientResources = clientResources;
     }
 
 }

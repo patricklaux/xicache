@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-01
  */
-public interface RedisConnection {
+public interface RedisConnection extends AutoCloseable {
 
     String OK = "OK";
 

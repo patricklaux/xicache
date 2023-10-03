@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.support.lettuce;
+package com.igeeksky.xcache.extension.redis;
 
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import io.lettuce.core.pubsub.RedisPubSubListener;
@@ -12,9 +12,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */
-public class LettuceCacheMessageListener implements RedisPubSubListener<String, byte[]> {
+public class RedisCacheMessageListener implements RedisPubSubListener<String, byte[]> {
 
-    private static final Logger log = LoggerFactory.getLogger(LettuceCacheMessageListener.class);
+    private static final Logger log = LoggerFactory.getLogger(RedisCacheMessageListener.class);
 
     private final ConcurrentMap<String, CacheMessageConsumer> consumerMap = new ConcurrentHashMap<>();
 

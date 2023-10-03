@@ -1,12 +1,12 @@
 package com.igeeksky.xcache.extension.redis.config.props;
 
-import com.igeeksky.xcache.autoconfigure.lettuce.RedisType;
-import com.igeeksky.xcache.extension.redis.config.ClusterConfig;
-import com.igeeksky.xcache.extension.redis.config.StandaloneConfig;
+import com.igeeksky.xcache.autoconfigure.redis.lettuce.RedisType;
+import com.igeeksky.xcache.extension.redis.config.*;
 import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import io.lettuce.core.SslVerifyMode;
 
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -17,6 +17,8 @@ import java.util.StringJoiner;
 public class Lettuce {
 
     private String id;
+
+    private String charset;
 
     private String host = "localhost";
 
@@ -56,6 +58,14 @@ public class Lettuce {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getCharset() {
+        return charset;
+    }
+
+    public void setCharset(String charset) {
+        this.charset = charset;
     }
 
     public String getHost() {
@@ -186,91 +196,113 @@ public class Lettuce {
         this.cluster = cluster;
     }
 
-    public StandaloneConfig createStandaloneConfig() {
-        StandaloneConfig config = new StandaloneConfig();
+    public RedisStandaloneConfig createStandaloneConfig() {
         Assert.hasText(this.id, "id must not be null or empty");
+
+        RedisStandaloneConfig config = new RedisStandaloneConfig();
         config.setId(StringUtils.trim(this.id));
 
         if (StringUtils.hasText(this.host)) {
             config.setHost(StringUtils.trim(this.host));
         }
         config.setPort(this.port);
-        config.setDatabase(this.database);
-        if (StringUtils.hasText(this.username)) {
-            config.setUsername(StringUtils.trim(this.username));
-        }
-        if (StringUtils.hasText(this.password)) {
-            config.setPassword(this.password);
-        }
-        if (StringUtils.hasText(this.clientName)) {
-            config.setClientName(this.clientName);
-        }
-        if (this.timeout != null) {
-            config.setTimeout(this.timeout);
-        }
-        if (this.ssl != null) {
-            config.setSsl(this.ssl);
-        }
-        if (this.startTls != null) {
-            config.setStartTls(this.startTls);
-        }
-        if (this.verifyPeer != null) {
-            config.setVerifyPeer(this.verifyPeer);
-        }
-        if (this.sslVerifyMode != null) {
-            config.setSslVerifyMode(this.sslVerifyMode);
+        if (StringUtils.hasText(readFrom)) {
+            config.setReadFrom(this.readFrom);
         }
         if (this.redisType != null) {
             config.setRedisType(redisType);
         }
         if (this.replicas != null) {
-            config.setReplicas(this.replicas);
+            for (String node : replicas) {
+                RedisNode replica = new RedisNode(node);
+                config.addReplica(replica);
+            }
+        }
+        setGeneric(config.getGeneric());
+        return config;
+    }
+
+    public RedisSentinelConfig createSentinelConfig() {
+        Assert.hasText(this.id, "id must not be null or empty");
+
+        RedisSentinelConfig config = new RedisSentinelConfig();
+        config.setId(StringUtils.trim(this.id));
+        if (StringUtils.hasText(charset)) {
+            config.setCharset(Charset.forName(StringUtils.toUpperCase(charset)));
         }
         if (StringUtils.hasText(readFrom)) {
             config.setReadFrom(this.readFrom);
         }
+
+        String master = sentinel.getMaster();
+        Assert.hasText(master, "master must not be null or empty");
+
+        config.setMasterId(master);
+
+        String sentinelUsername = sentinel.getUsername();
+        config.setSentinelUsername(sentinelUsername);
+
+        String sentinelPassword = sentinel.getPassword();
+        config.setSentinelPassword(sentinelPassword);
+
+        List<String> nodes = sentinel.getNodes();
+        for (String node : nodes) {
+            RedisNode sentinelNode = new RedisNode(node);
+            config.addSentinel(sentinelNode);
+        }
+
+        setGeneric(config.getGeneric());
         return config;
     }
 
-    public ClusterConfig createClusterConfig() {
-        ClusterConfig config = new ClusterConfig();
+    public RedisClusterConfig createClusterConfig() {
         Assert.hasText(this.id, "id must not be null or empty");
+
+        RedisClusterConfig config = new RedisClusterConfig();
         config.setId(StringUtils.trim(this.id));
-        if (StringUtils.hasText(this.username)) {
-            config.setUsername(StringUtils.trim(this.username));
-        }
-        if (StringUtils.hasText(this.password)) {
-            config.setPassword(this.password);
-        }
-        if (StringUtils.hasText(this.clientName)) {
-            config.setClientName(this.clientName);
-        }
-        if (this.timeout != null) {
-            config.setTimeout(this.timeout);
-        }
-        if (this.ssl != null) {
-            config.setSsl(this.ssl);
-        }
-        if (this.startTls != null) {
-            config.setStartTls(this.startTls);
-        }
-        if (this.verifyPeer != null) {
-            config.setVerifyPeer(this.verifyPeer);
-        }
-        if (this.sslVerifyMode != null) {
-            config.setSslVerifyMode(this.sslVerifyMode);
-        }
+
         if (StringUtils.hasText(readFrom)) {
             config.setReadFrom(this.readFrom);
         }
         config.setCluster(cluster);
+
+        setGeneric(config.getGeneric());
         return config;
+    }
+
+    private void setGeneric(RedisGenericConfig generic) {
+        generic.setDatabase(this.database);
+        if (StringUtils.hasText(this.username)) {
+            generic.setUsername(StringUtils.trim(this.username));
+        }
+        if (StringUtils.hasText(this.password)) {
+            generic.setPassword(this.password);
+        }
+        if (StringUtils.hasText(this.clientName)) {
+            generic.setClientName(this.clientName);
+        }
+        if (this.timeout != null) {
+            generic.setTimeout(this.timeout);
+        }
+        if (this.ssl != null) {
+            generic.setSsl(this.ssl);
+        }
+        if (this.startTls != null) {
+            generic.setStartTls(this.startTls);
+        }
+        if (this.verifyPeer != null) {
+            generic.setVerifyPeer(this.verifyPeer);
+        }
+        if (this.sslVerifyMode != null) {
+            generic.setSslVerifyMode(this.sslVerifyMode);
+        }
     }
 
     @Override
     public String toString() {
         return new StringJoiner(", ", "{", "}")
                 .add("id='" + id + "'")
+                .add("charset='" + charset + "'")
                 .add("host='" + host + "'")
                 .add("port=" + port)
                 .add("database=" + database)

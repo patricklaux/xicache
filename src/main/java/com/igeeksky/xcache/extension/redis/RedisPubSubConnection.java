@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-01
  */
-public interface RedisPubSubConnection {
+public interface RedisPubSubConnection extends AutoCloseable {
 
     Mono<Void> psubscribe(String... patterns);
 

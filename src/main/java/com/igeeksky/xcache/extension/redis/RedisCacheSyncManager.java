@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.support.lettuce;
+package com.igeeksky.xcache.extension.redis;
 
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.sync.CacheMessagePublisher;
@@ -10,16 +10,16 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
-public class LettuceCacheSyncManager implements CacheSyncManager {
+public class RedisCacheSyncManager implements CacheSyncManager {
 
     private final LettuceCacheMessagePublisher publisher;
 
-    private final LettuceCacheMessageListener listener;
+    private final RedisCacheMessageListener listener;
 
     private final StatefulRedisPubSubConnection<String, byte[]> pubSubConnection;
 
-    public LettuceCacheSyncManager(LettuceConnectionFactory factory) {
-        this.listener = new LettuceCacheMessageListener();
+    public RedisCacheSyncManager(LettuceConnectionFactory factory) {
+        this.listener = new RedisCacheMessageListener();
         pubSubConnection = factory.getPubSubConnection();
         pubSubConnection.addListener(this.listener);
         this.publisher = new LettuceCacheMessagePublisher(pubSubConnection.reactive());

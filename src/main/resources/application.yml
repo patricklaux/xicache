@@ -54,18 +54,19 @@ xcache:
 
 
   redis:
+    stores:
+      - id: lettuceCacheStoreProvider
+        connection: lettuceConnectionFactory
+    syncs:
+      - id: lettuceCacheSyncProvider
+        connection: lettuceConnectionFactory
     lettuce:
       client-resources:
         io-threads-size: 4
         computation-threads-size: 4
-      stores:
-        - id: lettuceCacheStoreProvider
-          connection: lettuceConnectionFactory
-      syncs:
-        - id: lettuceCacheSyncProvider
-          connection: lettuceConnectionFactory
       connections:
         - id: lettuceConnectionFactory
+          charset: UTF-8
           database: 0
           host: localhost
           port: 6379

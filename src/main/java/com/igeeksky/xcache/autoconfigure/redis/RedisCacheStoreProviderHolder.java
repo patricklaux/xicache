@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.autoconfigure.lettuce;
+package com.igeeksky.xcache.autoconfigure.redis;
 
 import com.igeeksky.xcache.autoconfigure.holder.RemoteCacheStoreHolder;
 import com.igeeksky.xcache.store.RemoteCacheStoreProvider;
@@ -13,19 +13,19 @@ import java.util.Map;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-29
  */
-public class LettuceCacheStoreProviderHolder implements RemoteCacheStoreHolder {
+public class RedisCacheStoreProviderHolder implements RemoteCacheStoreHolder {
 
     private final Map<String, RedisCacheStoreProvider> map = new HashMap<>();
 
-    public LettuceCacheStoreProviderHolder(Map<String, RedisCacheStoreProvider> map) {
-        Assert.notNull(map, "LettuceCacheStoreProvider map must not be null");
+    public RedisCacheStoreProviderHolder(Map<String, RedisCacheStoreProvider> map) {
+        Assert.notNull(map, "RedisCacheStoreProvider map must not be null");
         this.map.putAll(map);
     }
 
     @Override
     public RedisCacheStoreProvider get(String beanId) {
         RedisCacheStoreProvider provider = map.get(beanId);
-        Assert.notNull(provider, "beanId:[" + beanId + "] LettuceCacheStoreProvider doesn't exit");
+        Assert.notNull(provider, "beanId:[" + beanId + "] RedisCacheStoreProvider doesn't exit");
         return provider;
     }
 

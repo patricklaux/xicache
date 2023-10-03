@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.autoconfigure.lettuce;
+package com.igeeksky.xcache.autoconfigure.redis.lettuce;
 
 import com.igeeksky.xcache.autoconfigure.holder.Holder;
 import com.igeeksky.xcache.extension.redis.RedisConnectionFactory;

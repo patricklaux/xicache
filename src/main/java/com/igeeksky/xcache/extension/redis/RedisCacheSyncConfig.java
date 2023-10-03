@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.support.lettuce;
+package com.igeeksky.xcache.extension.redis;
 
 import io.lettuce.core.AbstractRedisClient;
 
@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-14
  */
-public class LettuceCacheSyncConfig {
+public class RedisCacheSyncConfig {
 
     /**
      * sync-channel:*
@@ -19,7 +19,7 @@ public class LettuceCacheSyncConfig {
 
     private AbstractRedisClient redisClient;
 
-    private LettuceCacheMessageListener listener;
+    private RedisCacheMessageListener listener;
 
     public String getPattern() {
         return pattern;
@@ -45,11 +45,11 @@ public class LettuceCacheSyncConfig {
         this.redisClient = redisClient;
     }
 
-    public LettuceCacheMessageListener getListener() {
+    public RedisCacheMessageListener getListener() {
         return listener;
     }
 
-    public void setListener(LettuceCacheMessageListener listener) {
+    public void setListener(RedisCacheMessageListener listener) {
         this.listener = listener;
     }
 }

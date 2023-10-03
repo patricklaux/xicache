@@ -4,10 +4,11 @@ import io.lettuce.core.*;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
-import io.lettuce.core.masterreplica.MasterReplica;
+import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -95,9 +96,9 @@ public class TestLettuce {
         // 创建 RedisURI
         RedisURI.Builder uriBuilder = RedisURI.Builder
                 .sentinel(host, port, master)
+                .withAuthentication(username, password)     // 需判断用户名是否为空
                 .withClientName(clientName)
                 .withDatabase(database)
-                .withAuthentication(username, password)     // 需判断用户名是否为空
                 .withSsl(ssl)
                 .withStartTls(startTls)
                 .withTimeout(Duration.ofMillis(timeout))
@@ -106,7 +107,7 @@ public class TestLettuce {
         String[] array = nodes.split(",");
         for (String node : array) {
             String[] split = node.split(":");
-            uriBuilder.withSentinel(split[0], Integer.parseInt(split[1]));
+            uriBuilder.withSentinel(split[0], Integer.parseInt(split[1]), password);
         }
         RedisURI redisURI = uriBuilder.build();
 
@@ -125,8 +126,12 @@ public class TestLettuce {
                 .timeoutOptions(TimeoutOptions.create())
                 .publishOnScheduler(false)
                 .build();
+
         RedisClient redisClient = RedisClient.create(res, redisURI);
+
         redisClient.setOptions(clientOptions);
+
+        StatefulRedisSentinelConnection<byte[], byte[]> statefulRedisSentinelConnection = redisClient.connectSentinel(ByteArrayCodec.INSTANCE, redisURI);
     }
 
     void testCluster() {
@@ -197,5 +202,7 @@ public class TestLettuce {
         //         .tracing()
         //         .build();
     }
+
+
 
 }

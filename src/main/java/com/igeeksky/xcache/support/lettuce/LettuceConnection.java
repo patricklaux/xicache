@@ -15,11 +15,11 @@ import java.util.Map;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-01
  */
-public class LettuceConnection implements RedisConnection {
+public class LettuceConnection extends AbstractLettuceConnection {
 
     private final RedisReactiveCommands<byte[], byte[]> redisReactiveCommands;
 
-    private final RedisReactiveCommands<byte[], byte[]> bashRedisReactiveCommands;
+    private final RedisReactiveCommands<byte[], byte[]> bashReactiveCommands;
 
     private final StatefulRedisConnection<byte[], byte[]> redisConnection;
 
@@ -27,10 +27,11 @@ public class LettuceConnection implements RedisConnection {
 
     public LettuceConnection(StatefulRedisConnection<byte[], byte[]> redisConnection,
                              StatefulRedisConnection<byte[], byte[]> bashRedisConnection) {
+        super(redisConnection.reactive(), redisConnection.reactive());
         this.redisConnection = redisConnection;
         this.bashRedisConnection = bashRedisConnection;
         this.redisReactiveCommands = redisConnection.reactive();
-        this.bashRedisReactiveCommands = bashRedisConnection.reactive();
+        this.bashReactiveCommands = bashRedisConnection.reactive();
     }
 
     @Override
@@ -39,62 +40,19 @@ public class LettuceConnection implements RedisConnection {
     }
 
     @Override
-    public Mono<byte[]> get(byte[] key) {
-        return redisReactiveCommands.get(key);
-    }
-
-    @Override
-    public Flux<KeyValue<byte[], byte[]>> mget(byte[]... keys) {
-        return null;
-    }
-
-    @Override
-    public Mono<Void> set(byte[] key, byte[] value) {
-        return null;
-    }
-
-    @Override
-    public Mono<Void> psetex(byte[] key, long milliseconds, byte[] value) {
-        return null;
-    }
-
-    @Override
-    public Mono<Void> mset(Map<byte[], byte[]> keyValues) {
-        return null;
-    }
-
-    @Override
     public Mono<Void> mpsetex(List<ExpiryKeyValue<byte[], byte[]>> keyValues) {
-        return null;
+        return Flux.fromIterable(keyValues)
+                .flatMap(kv -> bashReactiveCommands
+                        .psetex(kv.getKey(), kv.getTtl(), kv.getValue())
+                        .doOnNext(result -> isSetSuccess(kv.getKey(), kv.getValue(), result))
+                )
+                .then()
+                .doOnSuccess(vod -> bashReactiveCommands.flushCommands());
     }
 
     @Override
     public Mono<Long> del(byte[]... keys) {
-        return null;
+        return redisReactiveCommands.del(keys);
     }
 
-    @Override
-    public Mono<byte[]> hget(byte[] key, byte[] field) {
-        return null;
-    }
-
-    @Override
-    public Flux<KeyValue<byte[], byte[]>> hmget(byte[] key, byte[]... field) {
-        return null;
-    }
-
-    @Override
-    public Mono<Boolean> hset(byte[] key, byte[] field, byte[] value) {
-        return null;
-    }
-
-    @Override
-    public Mono<Void> hmset(byte[] key, Map<byte[], byte[]> map) {
-        return null;
-    }
-
-    @Override
-    public Mono<Long> hdel(byte[] key, byte[]... fields) {
-        return null;
-    }
 }

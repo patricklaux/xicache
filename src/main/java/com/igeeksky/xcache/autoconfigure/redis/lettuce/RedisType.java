@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.autoconfigure.lettuce;
+package com.igeeksky.xcache.autoconfigure.redis.lettuce;
 
 /**
  * @author Patrick.Lau
