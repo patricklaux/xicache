@@ -1,12 +1,18 @@
-package com.igeeksky.xcache.extension.redis.config;
+package com.igeeksky.xcache.support.lettuce.config;
 
 import io.lettuce.core.SslVerifyMode;
+
+import java.nio.charset.Charset;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
-public class RedisGenericConfig {
+public class LettuceGenericConfig {
+
+    private String id;
+
+    private Charset charset;
 
     private int database = 0;
 
@@ -25,6 +31,22 @@ public class RedisGenericConfig {
     private boolean verifyPeer;
 
     private SslVerifyMode sslVerifyMode;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
+
+    public void setCharset(Charset charset) {
+        this.charset = charset;
+    }
 
     public int getDatabase() {
         return database;

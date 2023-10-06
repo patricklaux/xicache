@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.support.lettuce;
 
 import com.igeeksky.xcache.common.ExpiryKeyValue;
+import com.igeeksky.xtool.core.io.IOUtils;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import reactor.core.publisher.Flux;
@@ -50,6 +51,11 @@ public class LettuceClusterConnection extends AbstractLettuceConnection {
     @Override
     public Mono<Long> del(byte[]... keys) {
         return redisReactiveCommands.del(keys);
+    }
+
+    @Override
+    public void close() {
+        IOUtils.closeQuietly(this.redisConnection, this.bashRedisConnection);
     }
 
 }

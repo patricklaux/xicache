@@ -52,7 +52,6 @@ xcache:
   locks:
     - id: s
 
-
   redis:
     stores:
       - id: lettuceCacheStoreProvider
@@ -67,31 +66,98 @@ xcache:
       connections:
         - id: lettuceConnectionFactory
           charset: UTF-8
-          database: 0
-          host: localhost
-          port: 6379
-          username: redis-admin
-          password: 123456
-          ssl: false
-          read-timeout:
-          connect-timeout:
-          client-name:
-          replicas:
-          read-from:
-          redis-type: single
-          client-options:
-          sentinel:
-            master: mymaster
-            nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+          standalone:
+            master: 127.0.0.1:6379
+            replicas:
+            read-from:
             username: redis-admin
             password: 123456
+            database: 0
+            client-name:
+            ssl: false
+            start-tls: false
+            verify-peer: false
+            ssl-verify-mode: FULL
+            timeout:  # the command timeout for synchronous command execution.
+            client-options:
+              autoReconnect: true
+              cancelCommandsOnReconnectFailure: false
+              decodeBufferPolicy: # 需要编程实现
+              disconnectedBehavior: DEFAULT # 当断开连接时：DEFAULT 自动重连为true，缓存命令；自动重连为false，拒绝命令；ACCEPT_COMMANDS 缓存命令；REJECT_COMMANDS
+              publishOnScheduler: false # 是否使用专用的 reactor.core.scheduler.scheduler发送反应数据信号
+              pingBeforeActivateConnection: true
+              protocolVersion: RESP2
+              suspendReconnectOnProtocolFailure:
+              requestQueueSize: Integer.MAX_VALUE
+              # scriptCharset:  #采用全局 charset
+              socketOptions:
+                connect-timeout: 10 # second
+                tcpNoDelay: true  #  false to disable TCP NoDelay (enable Nagle's algorithm), true to enable TCP NoDelay (disable Nagle's algorithm).
+                keepAlive:
+                  enabled: false
+                  count: 9
+                  idle: 7200 # second
+                  interval: 75 # second
+              sslOptions:
+                sslProvider: JDK
+                keyStoreType:
+                keystore:
+                keystorePassword:
+                truststore:
+                truststorePassword:
+                protocols:
+                cipherSuites:
+                handshakeTimeout:
+              timeoutOptions:
+                timeoutCommands: false
+                applyConnectionTimeout: false
+                fixedTimeout: # 所有命令采用固定的超时设置
+          sentinel:
+            master-id: mymaster
+            nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+            read-from:
+            sentinel-username: redis-admin
+            sentinel-password: 123456
+            username: redis-admin
+            password: 123456
+            database: 0
+            client-name:
+            ssl: false
+            start-tls: false
+            verify-peer: false
+            ssl-verify-mode: FULL
+            timeout:  # the command timeout for synchronous command execution.
+            client-options:
+              autoReconnect: true
+              cancelCommandsOnReconnectFailure: false
+              # ……
           cluster:
             nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
-            max-redirects: 5
-            refresh:
-              dynamic-refresh-sources: true
-              period: 60000
-              adaptive: true
+            read-from:
+            username: redis-admin
+            password: 123456
+            database: 0
+            client-name:
+            ssl: false
+            start-tls: false
+            verify-peer: false
+            ssl-verify-mode: FULL
+            timeout:  # the command timeout for synchronous command execution.
+            client-options:
+              autoReconnect: true
+              cancelCommandsOnReconnectFailure: false
+              # ……
+              max-redirects:
+              validateClusterNodeMembership:
+              node-filter:    # 允许建立连接的节点[白名单]
+              refresh:
+                adaptiveRefreshTriggers: true
+                adaptiveRefreshTimeout:
+                closeStaleConnections:
+                dynamicRefreshSources:
+                periodicRefreshEnabled:
+                refreshPeriod:
+                refreshTriggersReconnectAttempts:
 
 
 

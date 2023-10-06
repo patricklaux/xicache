@@ -3,8 +3,8 @@ package com.igeeksky.xcache.extension.redis;
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.sync.CacheMessagePublisher;
 import com.igeeksky.xcache.extension.sync.CacheSyncManager;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
+import com.igeeksky.xcache.support.lettuce.LettuceConnectionFactory;
+import com.igeeksky.xtool.core.io.IOUtils;
 
 /**
  * @author Patrick.Lau
@@ -12,22 +12,22 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
  */
 public class RedisCacheSyncManager implements CacheSyncManager {
 
-    private final LettuceCacheMessagePublisher publisher;
+    private final RedisCacheMessagePublisher publisher;
 
     private final RedisCacheMessageListener listener;
 
-    private final StatefulRedisPubSubConnection<String, byte[]> pubSubConnection;
+    private final RedisPubSubConnection pubSubConnection;
 
     public RedisCacheSyncManager(LettuceConnectionFactory factory) {
         this.listener = new RedisCacheMessageListener();
-        pubSubConnection = factory.getPubSubConnection();
-        pubSubConnection.addListener(this.listener);
-        this.publisher = new LettuceCacheMessagePublisher(pubSubConnection.reactive());
+        this.pubSubConnection = factory.getPubSubConnection();
+        this.pubSubConnection.addListener(this.listener);
+        this.publisher = new RedisCacheMessagePublisher(pubSubConnection);
     }
 
     @Override
     public CacheMessagePublisher getPublisher(String channel) {
-        pubSubConnection.reactive().subscribe(channel).subscribe();
+        pubSubConnection.subscribe(channel).subscribe();
         return publisher;
     }
 
@@ -38,21 +38,19 @@ public class RedisCacheSyncManager implements CacheSyncManager {
 
     @Override
     public void close() {
-        if (this.pubSubConnection != null && this.pubSubConnection.isOpen()) {
-            this.pubSubConnection.close();
-        }
+        IOUtils.closeQuietly(this.pubSubConnection);
     }
 
-    private static class LettuceCacheMessagePublisher implements CacheMessagePublisher {
-        private final RedisPubSubReactiveCommands<String, byte[]> pubSubReactiveCommands;
+    private static class RedisCacheMessagePublisher implements CacheMessagePublisher {
+        private final RedisPubSubConnection pubSubConnection;
 
-        public LettuceCacheMessagePublisher(RedisPubSubReactiveCommands<String, byte[]> pubSubReactiveCommands) {
-            this.pubSubReactiveCommands = pubSubReactiveCommands;
+        public RedisCacheMessagePublisher(RedisPubSubConnection pubSubConnection) {
+            this.pubSubConnection = pubSubConnection;
         }
 
         @Override
         public void publish(String channel, byte[] message) {
-            pubSubReactiveCommands.publish(channel, message).subscribe();
+            pubSubConnection.publish(channel, message).subscribe();
         }
     }
 

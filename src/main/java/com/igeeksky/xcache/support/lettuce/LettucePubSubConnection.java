@@ -2,6 +2,7 @@ package com.igeeksky.xcache.support.lettuce;
 
 import com.igeeksky.xcache.extension.redis.RedisPubSubConnection;
 import com.igeeksky.xcache.extension.redis.RedisPubSubListener;
+import com.igeeksky.xtool.core.io.IOUtils;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import reactor.core.publisher.Mono;
@@ -74,4 +75,13 @@ public class LettucePubSubConnection implements RedisPubSubConnection {
         });
     }
 
+    @Override
+    public Mono<Long> publish(String channel, byte[] message) {
+        return this.pubSubCommands.publish(channel, message);
+    }
+
+    @Override
+    public void close() {
+        IOUtils.closeQuietly(this.connection);
+    }
 }

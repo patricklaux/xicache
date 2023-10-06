@@ -19,4 +19,5 @@ public interface RedisPubSubConnection extends AutoCloseable {
 
     void addListener(RedisPubSubListener listener);
 
+    Mono<Long> publish(String channel, byte[] message);
 }

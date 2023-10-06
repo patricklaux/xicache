@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.extension.redis;
 
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
-import io.lettuce.core.pubsub.RedisPubSubListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */
-public class RedisCacheMessageListener implements RedisPubSubListener<String, byte[]> {
+public class RedisCacheMessageListener implements RedisPubSubListener {
 
     private static final Logger log = LoggerFactory.getLogger(RedisCacheMessageListener.class);
 

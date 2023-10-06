@@ -1,8 +1,9 @@
 package com.igeeksky.xcache.support.lettuce;
 
 import com.igeeksky.xcache.extension.redis.RedisConnectionFactory;
-import com.igeeksky.xcache.extension.redis.config.RedisClusterConfig;
-import com.igeeksky.xcache.extension.redis.config.RedisNode;
+import com.igeeksky.xcache.support.lettuce.config.LettuceClusterConfig;
+import com.igeeksky.xcache.config.HostAndPort;
+import com.igeeksky.xtool.core.io.IOUtils;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.ClusterClientOptions;
@@ -10,7 +11,6 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.resource.ClientResources;
-import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ public class LettuceClusterConnectionFactory implements RedisConnectionFactory {
 
     private final Lock lock = new ReentrantLock();
 
-    private final RedisClusterConfig config;
+    private final LettuceClusterConfig config;
 
     private final RedisClusterClient redisClient;
 
@@ -33,7 +33,7 @@ public class LettuceClusterConnectionFactory implements RedisConnectionFactory {
 
     private volatile LettuceClusterPubSubConnection pubSubConnection;
 
-    public LettuceClusterConnectionFactory(RedisClusterConfig config, ClusterClientOptions options, ClientResources res) {
+    public LettuceClusterConnectionFactory(LettuceClusterConfig config, ClusterClientOptions options, ClientResources res) {
         this.config = config;
         this.redisClient = redisClient(config, options, res);
         StatefulRedisClusterConnection<byte[], byte[]> connection = connection(redisClient, config, false);
@@ -42,21 +42,20 @@ public class LettuceClusterConnectionFactory implements RedisConnectionFactory {
     }
 
     private static StatefulRedisClusterConnection<byte[], byte[]> connection(
-            RedisClusterClient redisClient, RedisClusterConfig config, boolean autoFlush) {
-
+            RedisClusterClient redisClient, LettuceClusterConfig config, boolean autoFlush) {
         StatefulRedisClusterConnection<byte[], byte[]> connection = redisClient.connect(ByteArrayCodec.INSTANCE);
-        connection.setReadFrom(ReadFrom.valueOf(config.getReadFrom()));
+        connection.setReadFrom(config.getReadFrom());
         connection.setAutoFlushCommands(autoFlush);
         return connection;
     }
 
-    private static RedisClusterClient redisClient(RedisClusterConfig config, ClusterClientOptions options, ClientResources resources) {
+    private static RedisClusterClient redisClient(LettuceClusterConfig config, ClusterClientOptions options, ClientResources res) {
         List<RedisURI> redisURIS = new ArrayList<>();
-        List<RedisNode> nodes = config.getNodes();
-        for (RedisNode node : nodes) {
-            redisURIS.add(LettuceHelper.redisURI(config.getGeneric(), node.getHost(), node.getPort()));
+        List<HostAndPort> nodes = config.getNodes();
+        for (HostAndPort node : nodes) {
+            redisURIS.add(LettuceHelper.redisURI(config, node));
         }
-        RedisClusterClient redisClient = RedisClusterClient.create(resources, redisURIS);
+        RedisClusterClient redisClient = RedisClusterClient.create(res, redisURIS);
         redisClient.setOptions(options);
         return redisClient;
     }
@@ -69,11 +68,11 @@ public class LettuceClusterConnectionFactory implements RedisConnectionFactory {
     @Override
     public LettuceClusterPubSubConnection getPubSubConnection() {
         if (this.pubSubConnection == null) {
+            ComposedRedisCodec codec = ComposedRedisCodec.getInstance(config.getCharset());
             lock.lock();
             try {
                 if (this.pubSubConnection == null) {
-                    ComposedRedisCodec redisCodec = ComposedRedisCodec.getInstance(config.getCharset());
-                    this.pubSubConnection = new LettuceClusterPubSubConnection(redisClient.connectPubSub(redisCodec));
+                    this.pubSubConnection = new LettuceClusterPubSubConnection(redisClient.connectPubSub(codec));
                 }
             } finally {
                 lock.unlock();
@@ -83,19 +82,8 @@ public class LettuceClusterConnectionFactory implements RedisConnectionFactory {
     }
 
     @Override
-    public void close() throws Exception {
-        closeQuietly(this.lettuceConnection, this.pubSubConnection);
-    }
-
-    private static void closeQuietly(AutoCloseable... closeables) {
-        for (AutoCloseable closeable : closeables) {
-            if (closeable != null) {
-                try {
-                    closeable.close();
-                } catch (Exception ignored) {
-                }
-            }
-        }
+    public void close() {
+        IOUtils.closeQuietly(this.lettuceConnection, this.pubSubConnection);
     }
 
 }

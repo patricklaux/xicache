@@ -2,10 +2,12 @@ package com.igeeksky.xcache.support.lettuce;
 
 import com.igeeksky.xcache.extension.redis.RedisPubSubConnection;
 import com.igeeksky.xcache.extension.redis.RedisPubSubListener;
+import com.igeeksky.xtool.core.io.IOUtils;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
 import reactor.core.publisher.Mono;
-import redis.clients.jedis.util.IOUtils;
 
 /**
  * @author Patrick.Lau
@@ -42,41 +44,48 @@ public class LettuceClusterPubSubConnection implements RedisPubSubConnection {
     }
 
     public void addListener(RedisPubSubListener listener) {
-        connection.addListener(new io.lettuce.core.pubsub.RedisPubSubListener<String, byte[]>() {
+        connection.addListener(new RedisClusterPubSubListener<String, byte[]>() {
+
             @Override
-            public void message(String channel, byte[] message) {
+            public void message(RedisClusterNode node, String channel, byte[] message) {
                 listener.message(channel, message);
             }
 
             @Override
-            public void message(String pattern, String channel, byte[] message) {
+            public void message(RedisClusterNode node, String pattern, String channel, byte[] message) {
                 listener.message(pattern, channel, message);
             }
 
             @Override
-            public void subscribed(String channel, long count) {
+            public void subscribed(RedisClusterNode node, String channel, long count) {
                 listener.subscribed(channel, count);
             }
 
             @Override
-            public void psubscribed(String pattern, long count) {
+            public void psubscribed(RedisClusterNode node, String pattern, long count) {
                 listener.psubscribed(pattern, count);
             }
 
             @Override
-            public void unsubscribed(String channel, long count) {
+            public void unsubscribed(RedisClusterNode node, String channel, long count) {
                 listener.unsubscribed(channel, count);
             }
 
             @Override
-            public void punsubscribed(String pattern, long count) {
+            public void punsubscribed(RedisClusterNode node, String pattern, long count) {
                 listener.punsubscribed(pattern, count);
             }
         });
     }
 
     @Override
-    public void close() throws Exception {
-
+    public Mono<Long> publish(String channel, byte[] message) {
+        return this.pubSubCommands.publish(channel, message);
     }
+
+    @Override
+    public void close() {
+        IOUtils.closeQuietly(this.connection);
+    }
+
 }

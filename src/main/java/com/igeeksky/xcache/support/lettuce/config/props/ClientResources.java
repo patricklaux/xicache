@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.redis.config.props;
+package com.igeeksky.xcache.support.lettuce.config.props;
 
 /**
  * @author Patrick.Lau

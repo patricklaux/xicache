@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.support.lettuce;
 
-import com.igeeksky.xcache.extension.redis.config.RedisGenericConfig;
+import com.igeeksky.xcache.support.lettuce.config.LettuceGenericConfig;
+import com.igeeksky.xcache.config.HostAndPort;
 import io.lettuce.core.RedisURI;
 
 import java.time.Duration;
@@ -11,15 +12,15 @@ import java.time.Duration;
  */
 public abstract class LettuceHelper {
 
-    public static RedisURI redisURI(RedisGenericConfig config, String host, int port) {
-        return redisURIBuilder(config).withHost(host).withPort(port).build();
+    public static RedisURI redisURI(LettuceGenericConfig config, HostAndPort node) {
+        return redisURIBuilder(config).withHost(node.getHost()).withPort(node.getPort()).build();
     }
 
-    public static RedisURI.Builder redisURIBuilder(RedisGenericConfig config, String masterId) {
+    public static RedisURI.Builder redisURIBuilder(LettuceGenericConfig config, String masterId) {
         return redisURIBuilder(config).withSentinelMasterId(masterId);
     }
 
-    public static RedisURI.Builder redisURIBuilder(RedisGenericConfig config) {
+    public static RedisURI.Builder redisURIBuilder(LettuceGenericConfig config) {
         RedisURI.Builder uriBuilder = RedisURI.builder()
                 .withClientName(config.getClientName())
                 .withDatabase(config.getDatabase())
