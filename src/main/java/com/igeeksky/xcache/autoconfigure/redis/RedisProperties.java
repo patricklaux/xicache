@@ -1,6 +1,5 @@
 package com.igeeksky.xcache.autoconfigure.redis;
 
-import com.igeeksky.xcache.autoconfigure.Store;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,5 +40,37 @@ public class RedisProperties {
                 .add("\"stores\":" + stores)
                 .add("\"syncs\":" + syncs)
                 .toString();
+    }
+
+    public static class Store {
+
+        private String id;
+
+        private String connection;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getConnection() {
+            return connection;
+        }
+
+        public void setConnection(String connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", "{", "}")
+                    .add("\"id\":" + id + "\"")
+                    .add("\"connection\":\"" + connection + "\"")
+                    .toString();
+        }
+
     }
 }

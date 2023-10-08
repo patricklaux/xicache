@@ -1,8 +1,7 @@
 package com.igeeksky.xcache.autoconfigure;
 
 import com.igeeksky.xcache.XcacheManager;
-import com.igeeksky.xcache.autoconfigure.holder.LocalCacheStoreHolder;
-import com.igeeksky.xcache.autoconfigure.holder.RemoteCacheStoreHolder;
+import com.igeeksky.xcache.autoconfigure.holder.*;
 import com.igeeksky.xcache.config.CacheConfigException;
 import com.igeeksky.xcache.config.props.CacheProps;
 import com.igeeksky.xcache.config.props.TemplateId;
@@ -35,8 +34,17 @@ public class XcacheManagerConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(XcacheManager.class)
-    XcacheManager xcacheManager(ObjectProvider<LocalCacheStoreHolder> localStoreHolders,
-                                ObjectProvider<RemoteCacheStoreHolder> remoteStoreHolders) {
+    XcacheManager xcacheManager(ObjectProvider<LocalCacheStoreProviderHolder> localStoreHolders,
+                                ObjectProvider<RemoteCacheStoreProviderHolder> remoteStoreHolders,
+                                ObjectProvider<KeyConvertorProviderHolder> keyConvertorHolders,
+                                ObjectProvider<SerializerProviderHolder> serializerHolders,
+                                ObjectProvider<CacheSyncProviderHolder> syncHolders,
+                                ObjectProvider<CacheStatProviderHolder> statHolders,
+                                ObjectProvider<CacheLockProviderHolder> lockHolders,
+                                ObjectProvider<CacheMonitorProviderHolder> monitorHolders,
+                                ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
+                                ObjectProvider<CompressorProviderHolder> compressorHolders
+    ) {
 
         String application = xcacheProperties.getApplication();
 
@@ -62,18 +70,50 @@ public class XcacheManagerConfiguration {
 
         XcacheManager xcacheManager = new XcacheManager(application, templates, cachePropsMap);
 
-        for (LocalCacheStoreHolder holder : localStoreHolders) {
+        for (LocalCacheStoreProviderHolder holder : localStoreHolders) {
             holder.getAll().forEach(xcacheManager::addProvider);
         }
 
-        for (RemoteCacheStoreHolder holder : remoteStoreHolders) {
+        for (RemoteCacheStoreProviderHolder holder : remoteStoreHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (KeyConvertorProviderHolder holder : keyConvertorHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (SerializerProviderHolder holder : serializerHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (CacheSyncProviderHolder holder : syncHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (CacheStatProviderHolder holder : statHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (CacheLockProviderHolder holder : lockHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (CacheMonitorProviderHolder holder : monitorHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (ContainsPredicateProviderHolder holder : predicateHolders) {
+            holder.getAll().forEach(xcacheManager::addProvider);
+        }
+
+        for (CompressorProviderHolder holder : compressorHolders) {
             holder.getAll().forEach(xcacheManager::addProvider);
         }
 
         return xcacheManager;
     }
 
-    private void putTemplate(Map<TemplateId, CacheProps> templates, TemplateId id, CacheProps cacheProps) {
+    private static void putTemplate(Map<TemplateId, CacheProps> templates, TemplateId id, CacheProps cacheProps) {
         if (cacheProps != null) {
             templates.put(id, cacheProps);
         }

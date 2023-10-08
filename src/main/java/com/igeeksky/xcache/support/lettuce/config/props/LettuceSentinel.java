@@ -6,14 +6,14 @@ import java.util.List;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-26
  */
-public class Sentinel extends Generic {
+public class LettuceSentinel extends LettuceGeneric {
 
     private String masterId;
     private List<String> nodes;
     private String readFrom;
     private String sentinelUsername;
     private String sentinelPassword;
-    private ClientOptions clientOptions;
+    private Lettuce.ClientOptions clientOptions;
 
     public String getMasterId() {
         return masterId;
@@ -55,11 +55,11 @@ public class Sentinel extends Generic {
         this.sentinelPassword = sentinelPassword;
     }
 
-    public ClientOptions getClientOptions() {
+    public Lettuce.ClientOptions getClientOptions() {
         return clientOptions;
     }
 
-    public void setClientOptions(ClientOptions clientOptions) {
+    public void setClientOptions(Lettuce.ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
     }
 

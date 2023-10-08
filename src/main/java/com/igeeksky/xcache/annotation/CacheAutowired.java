@@ -6,7 +6,7 @@ import java.lang.annotation.*;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-06
  */
-@Target({ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface CacheAutowired {

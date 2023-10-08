@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.support.lettuce.config;
 
 import com.igeeksky.xcache.config.HostAndPort;
-import com.igeeksky.xcache.support.lettuce.config.props.ClientOptions;
+import com.igeeksky.xcache.support.lettuce.config.props.Lettuce;
 import io.lettuce.core.ReadFrom;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class LettuceSentinelConfig extends LettuceGenericConfig {
 
     private List<HostAndPort> sentinels;
 
-    private ClientOptions clientOptions;
+    private Lettuce.ClientOptions clientOptions;
 
     public ReadFrom getReadFrom() {
         return readFrom;
@@ -64,11 +64,11 @@ public class LettuceSentinelConfig extends LettuceGenericConfig {
         this.sentinels = sentinels;
     }
 
-    public ClientOptions getClientOptions() {
+    public Lettuce.ClientOptions getClientOptions() {
         return clientOptions;
     }
 
-    public void setClientOptions(ClientOptions clientOptions) {
+    public void setClientOptions(Lettuce.ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
     }
 

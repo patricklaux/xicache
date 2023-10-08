@@ -14,6 +14,8 @@ import java.nio.charset.Charset;
  */
 public class JacksonSerializerProvider extends AbstractSerializerProvider {
 
+    public static final JacksonSerializerProvider INSTANCE = new JacksonSerializerProvider();
+
     @Override
     public <T> Serializer<T> doGet(Charset charset, Class<T> type, Class<?>[] valueParams) {
         ObjectMapper mapper = new ObjectMapper();

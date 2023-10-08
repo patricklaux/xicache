@@ -1,8 +1,13 @@
+spring:
+  redis:
+    host: localhost
+    port: 6379
+
 xcache:
   application: shop
   t0:
-    charset: UTF-8
-    cache-type: both
+    charset: GBK
+    cache-type: remote
     local:
       cache-store: caffeineCacheStoreProvider
       store-name: caffeine
@@ -15,16 +20,16 @@ xcache:
       expire-after-access: 300000
       enable-random-ttl: true
       enable-null-value: true
-      value-compressor: gzipCompressorProvider
+      value-compressor:
       value-serializer: jacksonSerializerProvider
     remote:
       cache-store: lettuceCacheStoreProvider
-      store-name: redis-string
+      store-name: redis-hash
       expire-after-write: 7200000
       enable-key-prefix: true
       enable-random-ttl: true
       enable-null-value: true
-      value-compressor: gzipCompressorProvider
+      value-compressor:
       value-serializer: jacksonSerializerProvider
     extension:
       key-convertor: jacksonKeyConvertorProvider
@@ -33,7 +38,7 @@ xcache:
       cache-stat: logCacheStatManager
       cache-sync: lettuceCacheSyncProvider
       cache-sync-channel: shop
-      cache-sync-serializer: jacksonKeyConvertorProvider
+      cache-sync-serializer: jacksonSerializerProvider
       cache-loader: none
       cache-monitors: none
       contains-predicate: alwaysTruePredicateProvider
@@ -44,13 +49,9 @@ xcache:
       template: t0
     - name: order
       template: t0
-  stats:
-    - id: s
-      cache-stat-period: 10000
-  syncs:
-    - id: s
-  locks:
-    - id: s
+  stat:
+    log:
+      period: 20000
 
   redis:
     stores:
@@ -60,23 +61,19 @@ xcache:
       - id: lettuceCacheSyncProvider
         connection: lettuceConnectionFactory
     lettuce:
-      client-resources:
-        io-threads-size: 4
-        computation-threads-size: 4
       connections:
         - id: lettuceConnectionFactory
-          charset: UTF-8
+          charset: GBK
           standalone:
             master: 127.0.0.1:6379
             replicas:
             read-from:
-            username: redis-admin
-            password: 123456
+            username:
+            password:
             database: 0
             client-name:
             ssl: false
             start-tls: false
-            verify-peer: false
             ssl-verify-mode: FULL
             timeout:  # the command timeout for synchronous command execution.
             client-options:
@@ -88,16 +85,16 @@ xcache:
               pingBeforeActivateConnection: true
               protocolVersion: RESP2
               suspendReconnectOnProtocolFailure:
-              requestQueueSize: Integer.MAX_VALUE
+              requestQueueSize: # Integer.MAX_VALUE
               # scriptCharset:  #采用全局 charset
               socketOptions:
-                connect-timeout: 10 # second
+                connect-timeout: 10000 # millisecond
                 tcpNoDelay: true  #  false to disable TCP NoDelay (enable Nagle's algorithm), true to enable TCP NoDelay (disable Nagle's algorithm).
                 keepAlive:
                   enabled: false
                   count: 9
-                  idle: 7200 # second
-                  interval: 75 # second
+                  idle: 7200000 # millisecond
+                  interval: 75000 # millisecond
               sslOptions:
                 sslProvider: JDK
                 keyStoreType:
@@ -111,7 +108,7 @@ xcache:
               timeoutOptions:
                 timeoutCommands: false
                 applyConnectionTimeout: false
-                fixedTimeout: # 所有命令采用固定的超时设置
+                fixedTimeout: # millisecond 所有命令均采用相同超时设置
           sentinel:
             master-id: mymaster
             nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
@@ -124,7 +121,6 @@ xcache:
             client-name:
             ssl: false
             start-tls: false
-            verify-peer: false
             ssl-verify-mode: FULL
             timeout:  # the command timeout for synchronous command execution.
             client-options:
@@ -140,7 +136,6 @@ xcache:
             client-name:
             ssl: false
             start-tls: false
-            verify-peer: false
             ssl-verify-mode: FULL
             timeout:  # the command timeout for synchronous command execution.
             client-options:

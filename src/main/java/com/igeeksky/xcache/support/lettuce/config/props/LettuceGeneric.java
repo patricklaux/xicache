@@ -4,7 +4,7 @@ package com.igeeksky.xcache.support.lettuce.config.props;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-06
  */
-public class Generic {
+public class LettuceGeneric {
 
     private String username;
     private String password;
@@ -12,7 +12,6 @@ public class Generic {
     private String clientName;
     private Boolean ssl;
     private Boolean startTls;
-    private Boolean verifyPeer;
     private String sslVerifyMode;
     private Long timeout;
 
@@ -62,14 +61,6 @@ public class Generic {
 
     public void setStartTls(Boolean startTls) {
         this.startTls = startTls;
-    }
-
-    public Boolean getVerifyPeer() {
-        return verifyPeer;
-    }
-
-    public void setVerifyPeer(Boolean verifyPeer) {
-        this.verifyPeer = verifyPeer;
     }
 
     public String getSslVerifyMode() {

@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.config;
 
 import com.igeeksky.xtool.core.lang.Assert;
+import com.igeeksky.xtool.core.lang.StringUtils;
 
 /**
  * @author Patrick.Lau
@@ -15,7 +16,8 @@ public class HostAndPort {
     public HostAndPort(String node) {
         String[] hp = node.split(":");
         Assert.isTrue(hp.length == 2, () -> "node:[" + node + "] can't convert to HostAndPort.");
-        this.host = hp[0];
+        this.host = StringUtils.trim(hp[0]);
+        Assert.hasLength(this.host, () -> "node:[" + node + "] host must not be null or empty.");
         this.port = Integer.parseInt(hp[1]);
     }
 
@@ -32,4 +34,21 @@ public class HostAndPort {
         return port;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof HostAndPort)) return false;
+
+        HostAndPort that = (HostAndPort) object;
+
+        if (getPort() != that.getPort()) return false;
+        return getHost().equals(that.getHost());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getHost().hashCode();
+        result = 31 * result + getPort();
+        return result;
+    }
 }

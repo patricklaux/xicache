@@ -6,12 +6,12 @@ import java.util.List;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-05
  */
-public class Standalone extends Generic {
+public class LettuceStandalone extends LettuceGeneric {
 
     private String master;
     private String readFrom;
     private List<String> replicas;
-    private ClientOptions clientOptions;
+    private Lettuce.ClientOptions clientOptions;
 
     public String getMaster() {
         return master;
@@ -37,11 +37,11 @@ public class Standalone extends Generic {
         this.replicas = replicas;
     }
 
-    public ClientOptions getClientOptions() {
+    public Lettuce.ClientOptions getClientOptions() {
         return clientOptions;
     }
 
-    public void setClientOptions(ClientOptions clientOptions) {
+    public void setClientOptions(Lettuce.ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
     }
 

@@ -28,7 +28,7 @@ public class RedisCacheMessageListener implements RedisPubSubListener {
             consumer.onMessage(message);
             return;
         }
-        log.error("No consumer to process this message. chan:[{}]", channel);
+        log.warn("No consumer to process this message. chan:[{}]", channel);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class RedisCacheMessageListener implements RedisPubSubListener {
             consumer.onMessage(message);
             return;
         }
-        log.error("No consumer to process this message. pattern:[{}],  chan:[{}]", pattern, channel);
+        log.warn("No consumer to process this message. pattern:[{}],  chan:[{}]", pattern, channel);
     }
 
     @Override

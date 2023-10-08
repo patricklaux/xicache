@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.support.lettuce.config;
 
 import com.igeeksky.xcache.config.HostAndPort;
-import com.igeeksky.xcache.support.lettuce.config.props.ClusterClientOptions;
+import com.igeeksky.xcache.support.lettuce.config.props.Lettuce;
 import io.lettuce.core.ReadFrom;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class LettuceClusterConfig extends LettuceGenericConfig {
 
     private List<HostAndPort> nodes;
 
-    private ClusterClientOptions clientOptions;
+    private Lettuce.ClusterClientOptions clientOptions;
 
     public ReadFrom getReadFrom() {
         return readFrom;
@@ -34,11 +34,11 @@ public class LettuceClusterConfig extends LettuceGenericConfig {
         this.nodes = nodes;
     }
 
-    public ClusterClientOptions getClientOptions() {
+    public Lettuce.ClusterClientOptions getClientOptions() {
         return clientOptions;
     }
 
-    public void setClientOptions(ClusterClientOptions clientOptions) {
+    public void setClientOptions(Lettuce.ClusterClientOptions clientOptions) {
         this.clientOptions = clientOptions;
     }
 

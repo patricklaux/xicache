@@ -3,6 +3,7 @@ package com.igeeksky.xcache.support.lettuce.config;
 import io.lettuce.core.SslVerifyMode;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Patrick.Lau
@@ -12,7 +13,7 @@ public class LettuceGenericConfig {
 
     private String id;
 
-    private Charset charset;
+    private Charset charset = StandardCharsets.UTF_8;
 
     private int database = 0;
 
@@ -27,8 +28,6 @@ public class LettuceGenericConfig {
     private boolean ssl = false;
 
     private boolean startTls = false;
-
-    private boolean verifyPeer;
 
     private SslVerifyMode sslVerifyMode;
 
@@ -102,14 +101,6 @@ public class LettuceGenericConfig {
 
     public void setStartTls(boolean startTls) {
         this.startTls = startTls;
-    }
-
-    public boolean isVerifyPeer() {
-        return verifyPeer;
-    }
-
-    public void setVerifyPeer(boolean verifyPeer) {
-        this.verifyPeer = verifyPeer;
     }
 
     public SslVerifyMode getSslVerifyMode() {

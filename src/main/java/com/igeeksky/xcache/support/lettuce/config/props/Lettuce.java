@@ -14,6 +14,8 @@ import io.lettuce.core.SslVerifyMode;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 
 /**
  * @author Patrick.Lau
@@ -25,11 +27,11 @@ public class Lettuce {
 
     private String charset;
 
-    private Cluster cluster;
+    private LettuceCluster cluster;
 
-    private Sentinel sentinel;
+    private LettuceSentinel sentinel;
 
-    private Standalone standalone;
+    private LettuceStandalone standalone;
 
     public String getId() {
         return id;
@@ -47,27 +49,27 @@ public class Lettuce {
         this.charset = charset;
     }
 
-    public Cluster getCluster() {
+    public LettuceCluster getCluster() {
         return cluster;
     }
 
-    public void setCluster(Cluster cluster) {
+    public void setCluster(LettuceCluster cluster) {
         this.cluster = cluster;
     }
 
-    public Sentinel getSentinel() {
+    public LettuceSentinel getSentinel() {
         return sentinel;
     }
 
-    public void setSentinel(Sentinel sentinel) {
+    public void setSentinel(LettuceSentinel sentinel) {
         this.sentinel = sentinel;
     }
 
-    public Standalone getStandalone() {
+    public LettuceStandalone getStandalone() {
         return standalone;
     }
 
-    public void setStandalone(Standalone standalone) {
+    public void setStandalone(LettuceStandalone standalone) {
         this.standalone = standalone;
     }
 
@@ -168,7 +170,7 @@ public class Lettuce {
         return config;
     }
 
-    private static void setGeneric(Generic original, LettuceGenericConfig config) {
+    private static void setGeneric(LettuceGeneric original, LettuceGenericConfig config) {
         String username = StringUtils.trim(original.getUsername());
         if (StringUtils.hasLength(username)) {
             config.setUsername(username);
@@ -196,11 +198,6 @@ public class Lettuce {
             config.setStartTls(startTls);
         }
 
-        Boolean verifyPeer = original.getVerifyPeer();
-        if (verifyPeer != null) {
-            config.setVerifyPeer(verifyPeer);
-        }
-
         String sslVerifyMode = StringUtils.toUpperCase(original.getSslVerifyMode());
         if (StringUtils.hasLength(sslVerifyMode)) {
             config.setSslVerifyMode(SslVerifyMode.valueOf(sslVerifyMode));
@@ -215,11 +212,475 @@ public class Lettuce {
     private static List<HostAndPort> convert(List<String> sources) {
         List<HostAndPort> nodes = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(sources)) {
-            for (String node : sources) {
-                nodes.add(new HostAndPort(node));
-            }
+            sources.forEach(node -> nodes.add(new HostAndPort(node)));
         }
         return nodes;
+    }
+
+
+    public static class ClientOptions {
+
+        private Boolean autoReconnect;
+
+        private Boolean cancelCommandsOnReconnectFailure;
+
+        private String disconnectedBehavior;
+
+        private Boolean publishOnScheduler;
+
+        private Boolean pingBeforeActivateConnection;
+
+        private String protocolVersion;
+
+        private Boolean suspendReconnectOnProtocolFailure;
+
+        private Integer requestQueueSize;
+
+        private String scriptCharset;
+
+        private SslOptions sslOptions;
+
+        private SocketOptions socketOptions;
+
+        private TimeoutOptions timeoutOptions;
+
+        public Boolean getAutoReconnect() {
+            return autoReconnect;
+        }
+
+        public void setAutoReconnect(Boolean autoReconnect) {
+            this.autoReconnect = autoReconnect;
+        }
+
+        public Boolean getCancelCommandsOnReconnectFailure() {
+            return cancelCommandsOnReconnectFailure;
+        }
+
+        public void setCancelCommandsOnReconnectFailure(Boolean cancelCommandsOnReconnectFailure) {
+            this.cancelCommandsOnReconnectFailure = cancelCommandsOnReconnectFailure;
+        }
+
+        public String getDisconnectedBehavior() {
+            return disconnectedBehavior;
+        }
+
+        public void setDisconnectedBehavior(String disconnectedBehavior) {
+            this.disconnectedBehavior = disconnectedBehavior;
+        }
+
+        public Boolean getPublishOnScheduler() {
+            return publishOnScheduler;
+        }
+
+        public void setPublishOnScheduler(Boolean publishOnScheduler) {
+            this.publishOnScheduler = publishOnScheduler;
+        }
+
+        public Boolean getPingBeforeActivateConnection() {
+            return pingBeforeActivateConnection;
+        }
+
+        public void setPingBeforeActivateConnection(Boolean pingBeforeActivateConnection) {
+            this.pingBeforeActivateConnection = pingBeforeActivateConnection;
+        }
+
+        public String getProtocolVersion() {
+            return protocolVersion;
+        }
+
+        public void setProtocolVersion(String protocolVersion) {
+            this.protocolVersion = protocolVersion;
+        }
+
+        public Boolean getSuspendReconnectOnProtocolFailure() {
+            return suspendReconnectOnProtocolFailure;
+        }
+
+        public void setSuspendReconnectOnProtocolFailure(Boolean suspendReconnectOnProtocolFailure) {
+            this.suspendReconnectOnProtocolFailure = suspendReconnectOnProtocolFailure;
+        }
+
+        public Integer getRequestQueueSize() {
+            return requestQueueSize;
+        }
+
+        public void setRequestQueueSize(Integer requestQueueSize) {
+            this.requestQueueSize = requestQueueSize;
+        }
+
+        public String getScriptCharset() {
+            return scriptCharset;
+        }
+
+        public void setScriptCharset(String scriptCharset) {
+            this.scriptCharset = scriptCharset;
+        }
+
+        public SslOptions getSslOptions() {
+            return sslOptions;
+        }
+
+        public void setSslOptions(SslOptions sslOptions) {
+            this.sslOptions = sslOptions;
+        }
+
+        public SocketOptions getSocketOptions() {
+            return socketOptions;
+        }
+
+        public void setSocketOptions(SocketOptions socketOptions) {
+            this.socketOptions = socketOptions;
+        }
+
+        public TimeoutOptions getTimeoutOptions() {
+            return timeoutOptions;
+        }
+
+        public void setTimeoutOptions(TimeoutOptions timeoutOptions) {
+            this.timeoutOptions = timeoutOptions;
+        }
+
+    }
+
+
+    public static class ClusterClientOptions extends ClientOptions {
+
+        private Integer maxRedirects;
+
+        private Boolean validateClusterNodeMembership;
+
+        // 白名单
+        private Set<String> nodeFilter;
+
+        private ClusterTopologyRefreshOptions topologyRefreshOptions;
+
+        public Integer getMaxRedirects() {
+            return maxRedirects;
+        }
+
+        public void setMaxRedirects(Integer maxRedirects) {
+            this.maxRedirects = maxRedirects;
+        }
+
+        public Boolean getValidateClusterNodeMembership() {
+            return validateClusterNodeMembership;
+        }
+
+        public void setValidateClusterNodeMembership(Boolean validateClusterNodeMembership) {
+            this.validateClusterNodeMembership = validateClusterNodeMembership;
+        }
+
+        public Set<String> getNodeFilter() {
+            return nodeFilter;
+        }
+
+        public void setNodeFilter(Set<String> nodeFilter) {
+            this.nodeFilter = nodeFilter;
+        }
+
+        public ClusterTopologyRefreshOptions getTopologyRefreshOptions() {
+            return topologyRefreshOptions;
+        }
+
+        public void setTopologyRefreshOptions(ClusterTopologyRefreshOptions topologyRefreshOptions) {
+            this.topologyRefreshOptions = topologyRefreshOptions;
+        }
+
+    }
+
+
+    public static class ClusterTopologyRefreshOptions {
+
+        private Set<String> adaptiveRefreshTriggers;
+
+        private Long adaptiveRefreshTimeout;
+
+        private Boolean closeStaleConnections;
+
+        private Boolean dynamicRefreshSources;
+
+        private Boolean periodicRefreshEnabled;
+
+        private Long refreshPeriod;
+
+        private Integer refreshTriggersReconnectAttempts;
+
+        public Set<String> getAdaptiveRefreshTriggers() {
+            return adaptiveRefreshTriggers;
+        }
+
+        public void setAdaptiveRefreshTriggers(Set<String> adaptiveRefreshTriggers) {
+            this.adaptiveRefreshTriggers = adaptiveRefreshTriggers;
+        }
+
+        public Long getAdaptiveRefreshTimeout() {
+            return adaptiveRefreshTimeout;
+        }
+
+        public void setAdaptiveRefreshTimeout(Long adaptiveRefreshTimeout) {
+            this.adaptiveRefreshTimeout = adaptiveRefreshTimeout;
+        }
+
+        public Boolean getCloseStaleConnections() {
+            return closeStaleConnections;
+        }
+
+        public void setCloseStaleConnections(Boolean closeStaleConnections) {
+            this.closeStaleConnections = closeStaleConnections;
+        }
+
+        public Boolean getDynamicRefreshSources() {
+            return dynamicRefreshSources;
+        }
+
+        public void setDynamicRefreshSources(Boolean dynamicRefreshSources) {
+            this.dynamicRefreshSources = dynamicRefreshSources;
+        }
+
+        public Boolean getPeriodicRefreshEnabled() {
+            return periodicRefreshEnabled;
+        }
+
+        public void setPeriodicRefreshEnabled(Boolean periodicRefreshEnabled) {
+            this.periodicRefreshEnabled = periodicRefreshEnabled;
+        }
+
+        public Long getRefreshPeriod() {
+            return refreshPeriod;
+        }
+
+        public void setRefreshPeriod(Long refreshPeriod) {
+            this.refreshPeriod = refreshPeriod;
+        }
+
+        public Integer getRefreshTriggersReconnectAttempts() {
+            return refreshTriggersReconnectAttempts;
+        }
+
+        public void setRefreshTriggersReconnectAttempts(Integer refreshTriggersReconnectAttempts) {
+            this.refreshTriggersReconnectAttempts = refreshTriggersReconnectAttempts;
+        }
+
+    }
+
+
+    public static class SocketOptions {
+
+        private Boolean tcpNoDelay;
+
+        private Long connectTimeout;
+
+        private KeepAliveOptions keepAlive;
+
+        public Boolean getTcpNoDelay() {
+            return tcpNoDelay;
+        }
+
+        public void setTcpNoDelay(Boolean tcpNoDelay) {
+            this.tcpNoDelay = tcpNoDelay;
+        }
+
+        public Long getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public void setConnectTimeout(Long connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        public KeepAliveOptions getKeepAlive() {
+            return keepAlive;
+        }
+
+        public void setKeepAlive(KeepAliveOptions keepAlive) {
+            this.keepAlive = keepAlive;
+        }
+
+    }
+
+
+    public static class KeepAliveOptions {
+
+        private Integer count;
+
+        private Boolean enabled;
+
+        private Long idle;
+
+        private Long interval;
+
+        public Integer getCount() {
+            return count;
+        }
+
+        public void setCount(Integer count) {
+            this.count = count;
+        }
+
+        public Boolean getEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public Long getIdle() {
+            return idle;
+        }
+
+        public void setIdle(Long idle) {
+            this.idle = idle;
+        }
+
+        public Long getInterval() {
+            return interval;
+        }
+
+        public void setInterval(Long interval) {
+            this.interval = interval;
+        }
+
+    }
+
+
+    public static class SslOptions {
+
+        private String sslProvider;
+
+        private String keyStoreType;
+
+        /**
+         * URL
+         */
+        private String keystore;
+
+        private String keystorePassword;
+
+        /**
+         * URL
+         */
+        private String truststore;
+
+        private String truststorePassword;
+
+        private List<String> protocols;
+
+        private List<String> cipherSuites;
+
+        private Long handshakeTimeout;
+
+        public String getSslProvider() {
+            return sslProvider;
+        }
+
+        public void setSslProvider(String sslProvider) {
+            this.sslProvider = sslProvider;
+        }
+
+        public String getKeyStoreType() {
+            return keyStoreType;
+        }
+
+        public void setKeyStoreType(String keyStoreType) {
+            this.keyStoreType = keyStoreType;
+        }
+
+        public String getKeystore() {
+            return keystore;
+        }
+
+        public void setKeystore(String keystore) {
+            this.keystore = keystore;
+        }
+
+        public String getKeystorePassword() {
+            return keystorePassword;
+        }
+
+        public void setKeystorePassword(String keystorePassword) {
+            this.keystorePassword = keystorePassword;
+        }
+
+        public String getTruststore() {
+            return truststore;
+        }
+
+        public void setTruststore(String truststore) {
+            this.truststore = truststore;
+        }
+
+        public String getTruststorePassword() {
+            return truststorePassword;
+        }
+
+        public void setTruststorePassword(String truststorePassword) {
+            this.truststorePassword = truststorePassword;
+        }
+
+        public List<String> getProtocols() {
+            return protocols;
+        }
+
+        public void setProtocols(List<String> protocols) {
+            this.protocols = protocols;
+        }
+
+        public List<String> getCipherSuites() {
+            return cipherSuites;
+        }
+
+        public void setCipherSuites(List<String> cipherSuites) {
+            this.cipherSuites = cipherSuites;
+        }
+
+        public Long getHandshakeTimeout() {
+            return handshakeTimeout;
+        }
+
+        public void setHandshakeTimeout(Long handshakeTimeout) {
+            this.handshakeTimeout = handshakeTimeout;
+        }
+    }
+
+
+    public static class TimeoutOptions {
+
+        private Boolean timeoutCommands;
+
+        private Long fixedTimeout;
+
+        // 不同的命令采用不同的超时配置，需编程实现
+        // private TimeoutSource timeoutSource
+
+        public Boolean getTimeoutCommands() {
+            return timeoutCommands;
+        }
+
+        public void setTimeoutCommands(Boolean timeoutCommands) {
+            this.timeoutCommands = timeoutCommands;
+        }
+
+        public Long getFixedTimeout() {
+            return fixedTimeout;
+        }
+
+        public void setFixedTimeout(Long fixedTimeout) {
+            this.fixedTimeout = fixedTimeout;
+        }
+
+    }
+
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", "{", "}")
+                .add("\"id\":\"" + id + "\"")
+                .add("\"charset\":\"" + charset + "\"")
+                .add("\"cluster\":" + cluster)
+                .add("\"sentinel\":" + sentinel)
+                .add("\"standalone\":" + standalone)
+                .toString();
     }
 
 }

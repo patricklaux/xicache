@@ -10,6 +10,8 @@ import java.util.Map;
  */
 public interface Holder<T extends Provider> {
 
+    void put(String beanId, T provider);
+
     T get(String beanId);
 
     Map<String, T> getAll();

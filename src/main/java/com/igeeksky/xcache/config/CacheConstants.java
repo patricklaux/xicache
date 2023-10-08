@@ -50,7 +50,7 @@ public interface CacheConstants {
     String REMOTE_STORE_NAME = "redis-string";
     long REMOTE_EXPIRE_AFTER_WRITE = 7200000L;
     String REMOTE_VALUE_SERIALIZER = "jacksonSerializerProvider";
-    String REMOTE_VALUE_COMPRESSOR = "gzipCompressorProvider";
+    String REMOTE_VALUE_COMPRESSOR = NONE;
     boolean REMOTE_ENABLE_KEY_PREFIX = true;
     boolean REMOTE_ENABLE_RANDOM_TTL = true;
     boolean REMOTE_ENABLE_NULL_VALUE = true;
@@ -66,7 +66,6 @@ public interface CacheConstants {
     String EXTENSION_CACHE_SYNC_CHANNEL = NONE;
     String EXTENSION_CACHE_SYNC_SERIALIZER = "jacksonSerializerProvider";
     String EXTENSION_CACHE_STAT = "logCacheStatManager";
-    long EXTENSION_CACHE_STAT_PERIOD = 60000L;
     String EXTENSION_CACHE_LOADER = NONE;
     String EXTENSION_CACHE_MONITORS = NONE;
     // 扩展属性默认配置 end

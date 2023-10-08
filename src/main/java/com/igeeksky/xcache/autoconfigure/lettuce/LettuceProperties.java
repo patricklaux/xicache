@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.autoconfigure.redis.lettuce;
+package com.igeeksky.xcache.autoconfigure.lettuce;
 
 import com.igeeksky.xcache.support.lettuce.config.props.Lettuce;
 import org.springframework.boot.context.properties.ConfigurationProperties;

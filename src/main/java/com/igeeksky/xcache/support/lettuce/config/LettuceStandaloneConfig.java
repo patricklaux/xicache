@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.support.lettuce.config;
 
 import com.igeeksky.xcache.config.HostAndPort;
-import com.igeeksky.xcache.support.lettuce.config.props.ClientOptions;
+import com.igeeksky.xcache.support.lettuce.config.props.Lettuce;
 import io.lettuce.core.ReadFrom;
 
 import java.util.List;
@@ -12,13 +12,15 @@ import java.util.List;
  */
 public class LettuceStandaloneConfig extends LettuceGenericConfig {
 
+    // TODO 添加 toString()方法
+
     private HostAndPort master = new HostAndPort("localhost", 6379);
 
     private ReadFrom readFrom = ReadFrom.UPSTREAM;
 
     private List<HostAndPort> replicas;
 
-    private ClientOptions clientOptions;
+    private Lettuce.ClientOptions clientOptions;
 
     public HostAndPort getMaster() {
         return master;
@@ -44,11 +46,11 @@ public class LettuceStandaloneConfig extends LettuceGenericConfig {
         this.replicas = replicas;
     }
 
-    public ClientOptions getClientOptions() {
+    public Lettuce.ClientOptions getClientOptions() {
         return clientOptions;
     }
 
-    public void setClientOptions(ClientOptions clientOptions) {
+    public void setClientOptions(Lettuce.ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
     }
 

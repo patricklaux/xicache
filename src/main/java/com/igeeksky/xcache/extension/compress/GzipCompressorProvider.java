@@ -6,6 +6,8 @@ package com.igeeksky.xcache.extension.compress;
  */
 public class GzipCompressorProvider implements CompressorProvider {
 
+    public static final GzipCompressorProvider INSTANCE = new GzipCompressorProvider();
+
     @Override
     public Compressor get() {
         return GzipCompressor.getInstance();

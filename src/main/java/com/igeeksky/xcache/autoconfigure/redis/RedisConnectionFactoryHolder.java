@@ -1,7 +1,8 @@
-package com.igeeksky.xcache.autoconfigure.redis.lettuce;
+package com.igeeksky.xcache.autoconfigure.redis;
 
 import com.igeeksky.xcache.autoconfigure.holder.Holder;
 import com.igeeksky.xcache.extension.redis.RedisConnectionFactory;
+import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,13 +16,16 @@ public class RedisConnectionFactoryHolder implements Holder<RedisConnectionFacto
 
     private final Map<String, RedisConnectionFactory> map = new HashMap<>();
 
-    public RedisConnectionFactoryHolder(Map<String, RedisConnectionFactory> factoryMap) {
-        this.map.putAll(factoryMap);
+    @Override
+    public void put(String beanId, RedisConnectionFactory provider) {
+        map.put(beanId, provider);
     }
 
     @Override
     public RedisConnectionFactory get(String beanId) {
-        return map.get(beanId);
+        RedisConnectionFactory factory = map.get(beanId);
+        Assert.notNull(factory, "beanId:[" + beanId + "] RedisConnectionFactory doesn't exist");
+        return factory;
     }
 
     @Override

@@ -36,7 +36,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
         // 1. 设置基于时间的驱逐策略
         // 1.1. 基于时间的自定义驱逐策略
         if (expiryProvider != null) {
-            Expiry<String, CacheValue<Object>> expiry = expiryProvider.get(config);
+            Expiry<String, CacheValue<Object>> expiry = expiryProvider.get(config.getName());
             if (expiry != null) {
                 builder.expireAfter(expiry);
                 return createCaffeineStore(config, builder);
@@ -88,7 +88,7 @@ public class CaffeineCacheStoreProvider implements LocalCacheStoreProvider {
         if (maximumWeight > 0) {
             builder.maximumWeight(maximumWeight);
             if (weigherProvider != null) {
-                Weigher<String, CacheValue<Object>> weigher = weigherProvider.get(config);
+                Weigher<String, CacheValue<Object>> weigher = weigherProvider.get(config.getName());
                 if (null == weigher) {
                     throw new CacheConfigException("Cache:[" + config.getName() + "]. The weigher is not predefined");
                 }

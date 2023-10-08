@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.support.lettuce;
 
-import com.igeeksky.xcache.support.lettuce.config.LettuceGenericConfig;
 import com.igeeksky.xcache.config.HostAndPort;
+import com.igeeksky.xcache.support.lettuce.config.LettuceGenericConfig;
 import io.lettuce.core.RedisURI;
 
 import java.time.Duration;
@@ -11,6 +11,9 @@ import java.time.Duration;
  * @since 0.0.4 2023-10-03
  */
 public abstract class LettuceHelper {
+
+    private LettuceHelper() {
+    }
 
     public static RedisURI redisURI(LettuceGenericConfig config, HostAndPort node) {
         return redisURIBuilder(config).withHost(node.getHost()).withPort(node.getPort()).build();
@@ -22,13 +25,17 @@ public abstract class LettuceHelper {
 
     public static RedisURI.Builder redisURIBuilder(LettuceGenericConfig config) {
         RedisURI.Builder uriBuilder = RedisURI.builder()
-                .withClientName(config.getClientName())
                 .withDatabase(config.getDatabase())
                 .withSsl(config.isSsl())
                 .withStartTls(config.isStartTls())
                 .withTimeout(Duration.ofMillis(config.getTimeout()))
-                .withVerifyPeer(config.isVerifyPeer())
                 .withVerifyPeer(config.getSslVerifyMode());
+
+        String clientName = config.getClientName();
+        if (clientName != null) {
+            uriBuilder.withClientName(clientName);
+        }
+
         String username = config.getUsername();
         String password = config.getPassword();
         if (username != null && password != null) {
@@ -36,6 +43,7 @@ public abstract class LettuceHelper {
         } else if (username == null && password != null) {
             uriBuilder.withPassword(password.toCharArray());
         }
+
         return uriBuilder;
     }
 
