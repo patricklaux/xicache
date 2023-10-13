@@ -10,7 +10,7 @@ import com.igeeksky.xcache.config.props.CacheProps;
 import com.igeeksky.xcache.config.props.TemplateId;
 import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.extension.contains.AlwaysTrueContainsPredicate;
+import com.igeeksky.xcache.extension.contains.TrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
@@ -208,7 +208,7 @@ public class XcacheManager implements CacheManager {
             requireNonNull(predicate, () -> "Unable to get predicate from provider:[" + beanId + "].");
             return predicate;
         }
-        return AlwaysTrueContainsPredicate.getInstance();
+        return TrueContainsPredicate.getInstance();
     }
 
     /**

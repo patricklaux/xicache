@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 0.0.4 2023-10-09
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureBefore(XcacheManagerConfiguration.class)
+@AutoConfigureBefore(CacheManagerConfiguration.class)
 class LocalCacheLockConfiguration {
 
     public static final String LOCAL_CACHE_LOCK_PROVIDER_ID = "localCacheLockProvider";

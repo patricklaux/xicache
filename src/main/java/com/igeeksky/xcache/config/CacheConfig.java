@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.config;
 
-import com.igeeksky.xcache.extension.contains.AlwaysTrueContainsPredicate;
+import com.igeeksky.xcache.extension.contains.TrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
 import com.igeeksky.xcache.extension.loader.CacheLoader;
@@ -124,7 +124,7 @@ public class CacheConfig<K, V> {
         if (containsPredicate != null) {
             return containsPredicate;
         }
-        return AlwaysTrueContainsPredicate.getInstance();
+        return TrueContainsPredicate.getInstance();
     }
 
     public void setContainsPredicate(ContainsPredicate<K> containsPredicate) {

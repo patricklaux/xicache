@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 0.0.4 2023-10-08
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureBefore(XcacheManagerConfiguration.class)
+@AutoConfigureBefore(CacheManagerConfiguration.class)
 public class JacksonAutoConfiguration {
 
     public static final String JACKSON_CONVERTOR_PROVIDER_ID = "jacksonKeyConvertorProvider";

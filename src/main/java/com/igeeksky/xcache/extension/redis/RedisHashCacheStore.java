@@ -43,7 +43,7 @@ public class RedisHashCacheStore<K, V> implements RemoteCacheStore {
         this.serializer = serializer;
         this.connection = connection;
         this.name = serializer.serialize(config.getName());
-        this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), config.getCharset(), serializer);
+        this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), serializer);
         this.redisHashKeys = (connection.isCluster()) ? initHashKeys() : null;
     }
 

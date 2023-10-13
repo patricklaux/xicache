@@ -35,7 +35,7 @@ public class RedisStringCacheStore implements RemoteCacheStore {
         this.enableRandomTtl = config.getRemoteConfig().isEnableRandomTtl();
         this.expireAfterWrite = config.getRemoteConfig().getExpireAfterWrite();
         this.expireAfterWriteMin = (long) (expireAfterWrite * 0.8);
-        this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), config.getCharset(), serializer);
+        this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), serializer);
     }
 
     @Override

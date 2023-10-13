@@ -13,7 +13,7 @@ import java.util.StringJoiner;
  */
 @Configuration
 @ConfigurationProperties(prefix = "xcache")
-public class XcacheProperties {
+public class CacheProperties {
 
     private String application;
     private CacheProps t0;

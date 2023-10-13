@@ -8,13 +8,13 @@ import com.igeeksky.xcache.config.props.CacheProps;
  * @author Patrick.Lau
  * @since 0.0.3 2021-07-26
  */
-public class AlwaysTruePredicateProvider implements ContainsPredicateProvider {
+public class TrueContainsPredicateProvider implements ContainsPredicateProvider {
 
-    public static final AlwaysTruePredicateProvider INSTANCE = new AlwaysTruePredicateProvider();
+    public static final TrueContainsPredicateProvider INSTANCE = new TrueContainsPredicateProvider();
 
     @Override
     public <K> ContainsPredicate<K> get(Class<K> keyType, CacheProps cacheProps) {
-        return AlwaysTrueContainsPredicate.getInstance();
+        return TrueContainsPredicate.getInstance();
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.autoconfigure;
 
+import com.igeeksky.xcache.CacheManager;
 import com.igeeksky.xcache.XcacheManager;
+import com.igeeksky.xcache.aop.ProxyCacheConfiguration;
 import com.igeeksky.xcache.autoconfigure.holder.*;
 import com.igeeksky.xcache.config.CacheConfigException;
 import com.igeeksky.xcache.config.props.CacheProps;
@@ -8,6 +10,7 @@ import com.igeeksky.xcache.config.props.TemplateId;
 import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,45 +26,45 @@ import java.util.Map;
  * @since 0.0.4 2023-09-29
  */
 @Configuration(proxyBeanMethods = false)
-public class XcacheManagerConfiguration {
+@AutoConfigureBefore(ProxyCacheConfiguration.class)
+public class CacheManagerConfiguration {
 
-    private final XcacheProperties xcacheProperties;
+    private final CacheProperties cacheProperties;
 
-    XcacheManagerConfiguration(XcacheProperties xcacheProperties) {
-        System.out.println(xcacheProperties);
-        this.xcacheProperties = xcacheProperties;
+    CacheManagerConfiguration(CacheProperties cacheProperties) {
+        System.out.println(cacheProperties);
+        this.cacheProperties = cacheProperties;
     }
 
     @Bean
-    @ConditionalOnMissingBean(XcacheManager.class)
-    XcacheManager xcacheManager(ObjectProvider<LocalCacheStoreProviderHolder> localStoreHolders,
-                                ObjectProvider<RemoteCacheStoreProviderHolder> remoteStoreHolders,
-                                ObjectProvider<KeyConvertorProviderHolder> keyConvertorHolders,
-                                ObjectProvider<SerializerProviderHolder> serializerHolders,
-                                ObjectProvider<CacheSyncProviderHolder> syncHolders,
-                                ObjectProvider<CacheStatProviderHolder> statHolders,
-                                ObjectProvider<CacheLockProviderHolder> lockHolders,
-                                ObjectProvider<CacheMonitorProviderHolder> monitorHolders,
-                                ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
-                                ObjectProvider<CompressorProviderHolder> compressorHolders
-    ) {
+    @ConditionalOnMissingBean(CacheManager.class)
+    CacheManager cacheManager(ObjectProvider<LocalCacheStoreProviderHolder> localStoreHolders,
+                              ObjectProvider<RemoteCacheStoreProviderHolder> remoteStoreHolders,
+                              ObjectProvider<KeyConvertorProviderHolder> keyConvertorHolders,
+                              ObjectProvider<SerializerProviderHolder> serializerHolders,
+                              ObjectProvider<CacheSyncProviderHolder> syncHolders,
+                              ObjectProvider<CacheStatProviderHolder> statHolders,
+                              ObjectProvider<CacheLockProviderHolder> lockHolders,
+                              ObjectProvider<CacheMonitorProviderHolder> monitorHolders,
+                              ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
+                              ObjectProvider<CompressorProviderHolder> compressorHolders) {
 
-        String application = xcacheProperties.getApplication();
+        String application = cacheProperties.getApplication();
 
         Map<TemplateId, CacheProps> templates = new HashMap<>();
-        putTemplate(templates, TemplateId.T0, xcacheProperties.getT0());
-        putTemplate(templates, TemplateId.T1, xcacheProperties.getT1());
-        putTemplate(templates, TemplateId.T2, xcacheProperties.getT2());
-        putTemplate(templates, TemplateId.T3, xcacheProperties.getT3());
-        putTemplate(templates, TemplateId.T4, xcacheProperties.getT4());
-        putTemplate(templates, TemplateId.T5, xcacheProperties.getT5());
-        putTemplate(templates, TemplateId.T6, xcacheProperties.getT6());
-        putTemplate(templates, TemplateId.T7, xcacheProperties.getT7());
-        putTemplate(templates, TemplateId.T8, xcacheProperties.getT8());
-        putTemplate(templates, TemplateId.T9, xcacheProperties.getT9());
+        putTemplate(templates, TemplateId.T0, cacheProperties.getT0());
+        putTemplate(templates, TemplateId.T1, cacheProperties.getT1());
+        putTemplate(templates, TemplateId.T2, cacheProperties.getT2());
+        putTemplate(templates, TemplateId.T3, cacheProperties.getT3());
+        putTemplate(templates, TemplateId.T4, cacheProperties.getT4());
+        putTemplate(templates, TemplateId.T5, cacheProperties.getT5());
+        putTemplate(templates, TemplateId.T6, cacheProperties.getT6());
+        putTemplate(templates, TemplateId.T7, cacheProperties.getT7());
+        putTemplate(templates, TemplateId.T8, cacheProperties.getT8());
+        putTemplate(templates, TemplateId.T9, cacheProperties.getT9());
 
         Map<String, CacheProps> cachePropsMap = new HashMap<>();
-        List<CacheProps> caches = xcacheProperties.getCaches();
+        List<CacheProps> caches = cacheProperties.getCaches();
         for (CacheProps props : caches) {
             String name = StringUtils.trim(props.getName());
             Assert.hasLength(name, new CacheConfigException("cache-name must not be null or empty"));

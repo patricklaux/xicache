@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.redis;
 
-import com.igeeksky.xcache.autoconfigure.XcacheManagerConfiguration;
+import com.igeeksky.xcache.autoconfigure.CacheManagerConfiguration;
 import com.igeeksky.xcache.autoconfigure.holder.CacheSyncProviderHolder;
 import com.igeeksky.xcache.autoconfigure.holder.RemoteCacheStoreProviderHolder;
 import com.igeeksky.xcache.extension.redis.RedisCacheStoreProvider;
@@ -20,7 +20,7 @@ import java.util.List;
  * @since 0.0.4 2023-10-02
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureBefore(XcacheManagerConfiguration.class)
+@AutoConfigureBefore(CacheManagerConfiguration.class)
 public class RedisAutoConfiguration {
 
     private final RedisProperties redisProperties;

@@ -3,7 +3,7 @@ package com.igeeksky.xcache;
 import com.igeeksky.xcache.config.props.CacheProps;
 import com.igeeksky.xcache.config.props.TemplateId;
 import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
-import com.igeeksky.xcache.extension.contains.AlwaysTruePredicateProvider;
+import com.igeeksky.xcache.extension.contains.TrueContainsPredicateProvider;
 import com.igeeksky.xcache.extension.lock.LocalCacheLockProvider;
 import com.igeeksky.xcache.extension.statistic.LogCacheStatManager;
 import com.igeeksky.xcache.support.caffeine.CaffeineCacheStoreProvider;
@@ -62,7 +62,7 @@ class XcacheManagerTest {
         cacheManager.addProvider("jacksonSerializerProvider", new JacksonSerializerProvider());
         cacheManager.addProvider("gzipCompressorProvider", new GzipCompressorProvider());
         cacheManager.addProvider("logCacheStatManager", new LogCacheStatManager(10000));
-        cacheManager.addProvider("alwaysTruePredicateProvider", AlwaysTruePredicateProvider.getInstance());
+        cacheManager.addProvider("alwaysTruePredicateProvider", TrueContainsPredicateProvider.INSTANCE);
         cacheManager.addProvider("localCacheLockProvider", LocalCacheLockProvider.getInstance());
         cacheManager.addProvider("caffeineCacheStoreProvider", new CaffeineCacheStoreProvider(null, null));
 

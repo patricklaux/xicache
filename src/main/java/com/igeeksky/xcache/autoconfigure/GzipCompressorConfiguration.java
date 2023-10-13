@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 0.0.4 2023-10-09
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureBefore(XcacheManagerConfiguration.class)
+@AutoConfigureBefore(CacheManagerConfiguration.class)
 class GzipCompressorConfiguration {
 
     public static final String GZIP_COMPRESSOR_PROVIDER_ID = "gzipCompressorProvider";

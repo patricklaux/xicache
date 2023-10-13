@@ -13,9 +13,9 @@ public @interface CacheAutowired {
 
     String name() default "";
 
-    Class<?> keyType();
+    Class<?> keyType() default Object.class;
 
-    Class<?> valueType();
+    Class<?> valueType() default Undefined.class;
 
     /**
      * <P>值的泛型参数，配置的目的是 JSON 序列化时避免记录类型信息，可以节省存储空间</P>
