@@ -1,0 +1,156 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+xcache:
+  application: shop
+  t0:
+    charset: GBK
+    cache-type: remote
+    local:
+      cache-store: caffeineCacheStoreProvider
+      store-name: caffeine
+      initial-capacity: 1024
+      maximum-size: 2048
+      maximum-weight: 0
+      key-strength: none
+      value-strength: none
+      expire-after-write: 3600000
+      expire-after-access: 300000
+      enable-random-ttl: true
+      enable-null-value: true
+      value-compressor:
+      value-serializer: jacksonSerializerProvider
+    remote:
+      cache-store: lettuceCacheStoreProvider
+      store-name: redis-hash
+      expire-after-write: 7200000
+      enable-key-prefix: true
+      enable-random-ttl: true
+      enable-null-value: true
+      value-compressor:
+      value-serializer: jacksonSerializerProvider
+    extension:
+      key-convertor: jacksonKeyConvertorProvider
+      cache-lock: localCacheLockProvider
+      cache-lock-size: 128
+      cache-stat: logCacheStatManager
+      cache-sync: lettuceCacheSyncProvider
+      cache-sync-channel: shop
+      cache-sync-serializer: jacksonSerializerProvider
+      cache-loader: none
+      cache-monitors: none
+      contains-predicate: alwaysTruePredicateProvider
+    metadata:
+      s: s
+  caches:
+    - name: user
+      template: t0
+    - name: order
+      template: t0
+  stat:
+    log:
+      period: 20000
+
+  redis:
+    stores:
+      - id: lettuceCacheStoreProvider
+        connection: lettuceConnectionFactory
+    syncs:
+      - id: lettuceCacheSyncProvider
+        connection: lettuceConnectionFactory
+    lettuce:
+      connections:
+        - id: lettuceConnectionFactory
+          charset: UTF-8
+          standalone:
+            master: 127.0.0.1:6379
+            replicas:
+            read-from:
+            username:
+            password:
+            database: 0
+            client-name:
+            ssl: false
+            start-tls: false
+            ssl-verify-mode: FULL
+            timeout:  # the command timeout for synchronous command execution.
+            client-options:
+              auto-reconnect: true
+              cancelCommandsOnReconnectFailure: false
+              decodeBufferPolicy: # 需要编程实现
+              disconnectedBehavior: DEFAULT # 当断开连接时：DEFAULT 自动重连为true，缓存命令；自动重连为false，拒绝命令；ACCEPT_COMMANDS 缓存命令；REJECT_COMMANDS
+              publishOnScheduler: false # 是否使用专用的 reactor.core.scheduler.scheduler发送反应数据信号
+              pingBeforeActivateConnection: true
+              protocolVersion: RESP2
+              suspendReconnectOnProtocolFailure:
+              requestQueueSize: # Integer.MAX_VALUE
+              # scriptCharset:  #采用全局 charset
+              socketOptions:
+                connect-timeout: 10000 # millisecond
+                tcpNoDelay: true  #  false to disable TCP NoDelay (enable Nagle's algorithm), true to enable TCP NoDelay (disable Nagle's algorithm).
+                keepAlive:
+                  enabled: false
+                  count: 9
+                  idle: 7200000 # millisecond
+                  interval: 75000 # millisecond
+              sslOptions:
+                sslProvider: JDK
+                keyStoreType:
+                keystore:
+                keystorePassword:
+                truststore:
+                truststorePassword:
+                protocols:
+                cipherSuites:
+                handshakeTimeout:
+              timeoutOptions:
+                timeoutCommands: false
+                applyConnectionTimeout: false
+                fixedTimeout: # millisecond 所有命令均采用相同超时设置
+          sentinel:
+            master-id: my_master
+            nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+            read-from:
+            sentinel-username: redis-admin
+            sentinel-password: 123456
+            username: redis-admin
+            password: 123456
+            database: 0
+            client-name:
+            ssl: false
+            start-tls: false
+            ssl-verify-mode: FULL
+            timeout:  # the command timeout for synchronous command execution.
+            client-options:
+              autoReconnect: true
+              cancelCommandsOnReconnectFailure: false
+              # ……
+          cluster:
+            nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
+            read-from:
+            username: redis-admin
+            password: 123456
+            database: 0
+            client-name:
+            ssl: false
+            start-tls: false
+            ssl-verify-mode: FULL
+            timeout:  # the command timeout for synchronous command execution.
+            client-options:
+              autoReconnect: true
+              cancelCommandsOnReconnectFailure: false
+              # ……
+              max-redirects:
+              validateClusterNodeMembership:
+              node-filter:    # 允许建立连接的节点[白名单]
+              refresh:
+                adaptiveRefreshTriggers: true
+                adaptiveRefreshTimeout:
+                closeStaleConnections:
+                dynamicRefreshSources:
+                periodicRefreshEnabled:
+                refreshPeriod:
+                refreshTriggersReconnectAttempts:
