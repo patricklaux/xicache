@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.config;
 
-import com.igeeksky.xcache.extension.Compressor;
+import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.serializer.Serializer;
 
 /**
@@ -16,16 +16,16 @@ public class RemoteConfig<K, V> {
     private long expireAfterWrite;
 
     // Remote String
-    private boolean enableKeyPrefix = true;
+    private boolean enableKeyPrefix;
 
     // Local & Remote
-    private boolean enableRandomTtl = false;
+    private boolean enableRandomTtl;
 
     // Local & Remote
-    private boolean enableNullValue = true;
+    private boolean enableNullValue;
 
     // Local & Remote
-    private boolean enableCompressValue = false;
+    private boolean enableCompressValue;
 
     // Local & Remote
     private Compressor valueCompressor;

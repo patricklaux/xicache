@@ -1,9 +1,7 @@
 package com.igeeksky.xcache.extension.lock;
 
 import com.igeeksky.xcache.common.Provider;
-import com.igeeksky.xcache.config.CacheProps;
-
-import java.util.Map;
+import com.igeeksky.xcache.config.props.CacheProps;
 
 /**
  * 缓存锁工厂，用于获取 {@link CacheLock}
@@ -16,6 +14,6 @@ public interface CacheLockProvider extends Provider {
     /**
      * 获取缓存锁的Holder
      */
-    <K> CacheLock<K> get(Class<K> keyType, CacheProps cacheProps);
+    CacheLock get(CacheProps cacheProps);
 
 }

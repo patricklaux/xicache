@@ -12,4 +12,9 @@ public interface KeyConvertorProvider extends Provider {
 
     KeyConvertor get(Charset charset);
 
+    @Override
+    default void close() {
+        // do nothing
+    }
+
 }

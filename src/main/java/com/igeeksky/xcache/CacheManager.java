@@ -8,7 +8,16 @@ import java.util.Collection;
  */
 public interface CacheManager {
 
-    <K, V> Cache<K, V> get(String name, Class<K> keyType, Class<V> valueType);
+    /**
+     * @param cacheName   缓存名称
+     * @param keyType     键class
+     * @param valueType   值class
+     * @param valueParams 值泛型
+     * @param <K>         键类型
+     * @param <V>         值类型
+     * @return 缓存
+     */
+    <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType, Class<?>[] valueParams);
 
     Collection<Cache<?, ?>> getAll();
 

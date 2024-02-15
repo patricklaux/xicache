@@ -11,12 +11,13 @@ import java.util.Objects;
  */
 public class StringSerializerProvider implements SerializerProvider {
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <T> Serializer<T> get(String name, Charset charset, Class<T> type) {
+    @SuppressWarnings("unchecked")
+    public <T> Serializer<T> get(String name, Charset charset, Class<T> type, Class<?>[] valueParams) {
         if (Objects.equals(String.class, type)) {
             return (Serializer<T>) StringSerializer.getInstance(charset);
         }
         throw new CacheConfigException("type must be String.class. " + type);
     }
+
 }

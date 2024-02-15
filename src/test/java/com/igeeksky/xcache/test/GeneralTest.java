@@ -1,81 +1,42 @@
 package com.igeeksky.xcache.test;
 
-import com.igeeksky.xcache.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.util.HashSet;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Patrick.Lau
- * @since 0.0.4 2023-09-09
+ * @since 0.0.4 2023-09-12
  */
 public class GeneralTest {
 
     @Test
-    void testDuration() {
-        Duration duration = Duration.ofMillis(-1L);
-        Assertions.assertEquals(-1L, duration.toMillis());
+    void testHash() {
+        Map<byte[], String> map = new ConcurrentHashMap<>();
+
+        String value = "hash";
+        byte[] key0 = value.getBytes(StandardCharsets.UTF_8);
+        map.put(key0, value);
+
+        byte[] key1 = value.getBytes(StandardCharsets.UTF_8);
+
+        System.out.println("key0: " + map.get(key0));
+        System.out.println("key1: " + map.get(key1));
+
+        Assertions.assertNotNull(map.get(key0));
+        Assertions.assertNull(map.get(key1));
     }
 
     @Test
-    void testThrowException() {
-        Set<String> set = new HashSet<>();
-        set.add(null);
-        Mono.just(set)
-                .doOnNext(ks -> {
-                    System.out.println(ks.size());
-                    ks.forEach(key -> {
-                        if (null == key) {
-                            throw new RuntimeException("error");
-                        }
-                    });
-                })
-                .doOnError(throwable -> System.out.printf("1[%s]\n", throwable))
-                .doOnSuccess(ks -> System.out.println("success"))
-                .doOnNext(ks -> System.out.println("doOnNext[" + ks + "]"))
-                .subscribe(ks -> System.out.println("subscribe[" + ks + "]"));
+    void testUuid() {
+        UUID uuid = UUID.randomUUID();
+        System.out.println(uuid);
+        System.out.println(uuid.getMostSignificantBits());
+        System.out.println(uuid.getLeastSignificantBits());
     }
-
-    @Test
-    void testDoOnNext1() {
-        hasValueReturn(Mono.just(new User("ssss"))).subscribe();
-    }
-
-    static Mono<Void> hasValueReturn(Mono<User> mono) {
-        return mono.doOnNext(user -> user.setName("xxxx")).doOnNext(System.out::println).then();
-    }
-
-    @Test
-    void testDoOnNext3() {
-        emptyReturn1()
-                .doOnSuccess(user -> System.out.println("执行1" + user))
-                .map(user -> {
-                    System.out.println("执行2" + user);
-                    return user;
-                })
-                .switchIfEmpty(emptyReturn2())
-                .doOnSuccess(user -> System.out.println("执行3" + user))
-                .subscribe();
-    }
-
-    static Mono<User> emptyReturn1() {
-        System.out.println("emptyReturn1");
-        return Mono.fromSupplier(() -> null);
-    }
-
-    @Test
-    void testDoOnNext4() {
-        emptyReturn2().doOnSuccess(user -> System.out.println("执行2" + user)).subscribe();
-    }
-
-    static Mono<User> emptyReturn2() {
-        System.out.println("emptyReturn2");
-        return Mono.empty();
-    }
-
 
 }

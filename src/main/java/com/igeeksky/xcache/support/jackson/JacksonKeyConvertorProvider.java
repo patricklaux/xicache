@@ -11,6 +11,8 @@ import java.nio.charset.Charset;
  */
 public class JacksonKeyConvertorProvider implements KeyConvertorProvider {
 
+    public static final JacksonKeyConvertorProvider INSTANCE = new JacksonKeyConvertorProvider();
+
     @Override
     public KeyConvertor get(Charset charset) {
         return JacksonKeyConvertor.getInstance();

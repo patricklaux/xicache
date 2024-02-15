@@ -1,13 +1,26 @@
 package com.igeeksky.xcache.test;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-17
  */
 public class FluxTest {
+
+    @BeforeEach
+    void setUp() {
+        Hooks.onOperatorDebug();
+    }
+
+    @AfterEach
+    void tearDown() {
+        Hooks.resetOnOperatorDebug();
+    }
 
     @Test
     void doFinally() {

@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.igeeksky.xcache.common.KeyValue;
 import org.junit.jupiter.api.Test;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,11 +33,17 @@ public class TestJackson {
         TypeReference<KeyValue<String, List<User<String, Integer>>>> typeReference = new TypeReference<KeyValue<String, List<User<String, Integer>>>>() {
         };
 
-        KeyValue<String, List<User<String, Integer>>> keyValue = mapper.readValue(json, typeReference);
+        // KeyValue<String, List<User<String, Integer>>> keyValue = mapper.readValue(json, typeReference);
 
 
-        // JavaType javaType = mapper.getTypeFactory().constructParametricType(KeyValue.class, String.class, List.class);
-        // KeyValue<String, List<User<String, Integer>>> keyValue = mapper.readValue(json, javaType);
+        TypeFactory typeFactory = mapper.getTypeFactory();
+
+        JavaType javaType1 = typeFactory.constructType(typeReference);
+        JavaType javaType2 = typeFactory.constructFromCanonical("com.igeeksky.xcache.common.KeyValue<java.lang.String,java.util.List<com.igeeksky.xcache.support.Jackson.User<java.lang.String,java.lang.Integer>>>");
+        typeFactory.constructParametricType(KeyValue.class, String.class, List.class);
+        KeyValue<String, List<User<String, Integer>>> keyValue = mapper.readValue(json, javaType2);
+        System.out.println(javaType1.toCanonical());
+
 
         String key = keyValue.getKey();
         System.out.println("1.key:" + key.getClass());
@@ -51,34 +57,5 @@ public class TestJackson {
         System.out.println("5.age:" + age.getClass());
     }
 
-    public static class User<K, V> {
-
-        private K name;
-        private V age;
-
-        public User() {
-        }
-
-        public User(K name, V age) {
-            this.name = name;
-            this.age = age;
-        }
-
-        public K getName() {
-            return name;
-        }
-
-        public void setName(K name) {
-            this.name = name;
-        }
-
-        public V getAge() {
-            return age;
-        }
-
-        public void setAge(V age) {
-            this.age = age;
-        }
-    }
 
 }

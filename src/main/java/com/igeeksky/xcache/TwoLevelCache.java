@@ -1,13 +1,13 @@
 package com.igeeksky.xcache;
 
-import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.KeyValue;
 import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.config.CacheConfig;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProxy;
-import com.igeeksky.xcache.store.LocalCacheStore;
-import com.igeeksky.xcache.store.RemoteCacheStore;
+import com.igeeksky.xcache.store.LocalStore;
+import com.igeeksky.xcache.store.RemoteStore;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,13 +22,13 @@ import java.util.*;
  */
 public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
-    private final LocalCacheStore localStore;
+    private final LocalStore localStore;
 
-    private final RemoteCacheStore remoteStore;
+    private final RemoteStore remoteStore;
 
     private final CacheMonitorProxy<V> cacheMonitor = new CacheMonitorProxy<>();
 
-    public TwoLevelCache(CacheConfig<K, V> config, LocalCacheStore localStore, RemoteCacheStore remoteStore) {
+    public TwoLevelCache(CacheConfig<K, V> config, LocalStore localStore, RemoteStore remoteStore) {
         super(config);
         this.localStore = localStore;
         this.remoteStore = remoteStore;
@@ -49,7 +49,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected Mono<CacheValue<V>> doGet(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
+    protected Mono<CacheValue<V>> doLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
         return cacheLoader.load(key)
                 .doOnSuccess(value -> this.doPut(storeKey, value))
                 .doOnSuccess(value -> cacheMonitor.afterLoad(storeKey, value))

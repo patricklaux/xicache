@@ -1,6 +1,6 @@
 package com.igeeksky.xcache;
 
-import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.KeyValue;
 import reactor.core.publisher.Mono;

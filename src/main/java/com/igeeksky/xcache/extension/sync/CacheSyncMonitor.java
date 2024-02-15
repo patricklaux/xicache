@@ -1,15 +1,11 @@
 package com.igeeksky.xcache.extension.sync;
 
-import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.common.CacheType;
-import com.igeeksky.xcache.extension.CacheMessageConsumer;
+import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.serializer.Serializer;
-import com.igeeksky.xcache.store.LocalCacheStore;
-import com.igeeksky.xtool.core.collection.CollectionUtils;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -18,7 +14,7 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class CacheSyncMonitor<V> implements CacheMonitor<V>, CacheMessageConsumer {
+public class CacheSyncMonitor<V> implements CacheMonitor<V> {
 
     private final String sid;
 
@@ -29,19 +25,16 @@ public class CacheSyncMonitor<V> implements CacheMonitor<V>, CacheMessageConsume
 
     private final CacheType cacheType;
 
-    private final LocalCacheStore localCache;
-
     private final CacheMessagePublisher publisher;
 
     private final Serializer<CacheSyncMessage> serializer;
 
     public CacheSyncMonitor(String sid, String channel, CacheType cacheType,
-                            CacheMessagePublisher publisher, LocalCacheStore localCache, Serializer<CacheSyncMessage> serializer) {
+                            CacheMessagePublisher publisher, Serializer<CacheSyncMessage> serializer) {
         this.sid = sid;
         this.channel = channel;
         this.cacheType = cacheType;
         this.publisher = publisher;
-        this.localCache = localCache;
         this.serializer = serializer;
     }
 
@@ -91,22 +84,4 @@ public class CacheSyncMonitor<V> implements CacheMonitor<V>, CacheMessageConsume
         publisher.publish(channel, serializer.serialize(message));
     }
 
-    public void onMessage(byte[] source) {
-        CacheSyncMessage message = serializer.deserialize(source);
-        String sourceId = message.getSid();
-        if (Objects.equals(sid, sourceId)) {
-            return;
-        }
-        int type = message.getType();
-        if (Objects.equals(CacheSyncMessage.TYPE_REMOVE, type)) {
-            Set<String> keys = message.getKeys();
-            if (CollectionUtils.isNotEmpty(keys)) {
-                localCache.removeAll(keys).subscribe();
-            }
-            return;
-        }
-        if (Objects.equals(CacheSyncMessage.TYPE_CLEAR, type)) {
-            localCache.clear().subscribe();
-        }
-    }
 }

@@ -16,8 +16,6 @@
 
 package com.igeeksky.xcache.extension.serializer;
 
-import com.igeeksky.xcache.extension.SerializationFailedException;
-
 /**
  * 序列化类
  *

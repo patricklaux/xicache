@@ -2,6 +2,7 @@ package com.igeeksky.xcache.extension.monitor;
 
 
 import com.igeeksky.xcache.common.Provider;
+import com.igeeksky.xcache.config.props.CacheProps;
 
 /**
  * @author Patrick.Lau
@@ -9,6 +10,6 @@ import com.igeeksky.xcache.common.Provider;
  */
 public interface CacheMonitorProvider extends Provider {
 
-    <K, V> CacheMonitor<V> get(String name, Class<K> keyType, Class<V> valueType);
+    <K, V> CacheMonitor<V> get(CacheProps cacheProps, Class<K> keyType, Class<V> valueType);
 
 }

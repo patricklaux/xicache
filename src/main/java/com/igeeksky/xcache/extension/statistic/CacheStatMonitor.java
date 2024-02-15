@@ -3,8 +3,6 @@ package com.igeeksky.xcache.extension.statistic;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +71,7 @@ public class CacheStatMonitor<V> implements CacheMonitor<V> {
 
     @Override
     public void afterLoad(String key, V value) {
-        refLocal.get().incLoads();
+        refNone.get().incLoads();
     }
 
     @Override
@@ -109,11 +107,32 @@ public class CacheStatMonitor<V> implements CacheMonitor<V> {
         }
     }
 
-    public Tuple2<CacheStatMessage, CacheStatMessage> collect() {
+    /**
+     * 采集缓存统计信息
+     *
+     * @return {@link CacheStatMessage} 缓存统计信息
+     */
+    public CacheStatMessage collect() {
+        CacheStatCounter noopCounter = refNone.getAndSet(new CacheStatCounter());
         CacheStatCounter localCounter = refLocal.getAndSet(new CacheStatCounter());
         CacheStatCounter remoteCounter = refRemote.getAndSet(new CacheStatCounter());
-        CacheStatMessage localStatMsg = new CacheStatMessage(name, application, StoreType.LOCAL, localCounter);
-        CacheStatMessage remoteStatMsg = new CacheStatMessage(name, application, StoreType.REMOTE, remoteCounter);
-        return Tuples.of(localStatMsg, remoteStatMsg);
+        // 生成统计消息
+        CacheStatMessage statMsg = new CacheStatMessage(name, application);
+        statMsg.setLoads(noopCounter.getLoads());
+        statMsg.setNoop(convert(noopCounter));
+        statMsg.setLocal(convert(localCounter));
+        statMsg.setRemote(convert(remoteCounter));
+        return statMsg;
     }
+
+    private CacheStatistics convert(CacheStatCounter counter) {
+        CacheStatistics statistics = new CacheStatistics();
+        statistics.setHits(counter.getHits());
+        statistics.setMisses(counter.getMisses());
+        statistics.setPuts(counter.getPuts());
+        statistics.setRemovals(counter.getRemovals());
+        statistics.setClears(counter.getClears());
+        return statistics;
+    }
+
 }

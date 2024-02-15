@@ -3,7 +3,6 @@ package com.igeeksky.xcache.common;
 import com.igeeksky.xcache.extension.serializer.StringSerializer;
 import com.igeeksky.xtool.core.lang.ArrayUtils;
 
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
@@ -14,17 +13,14 @@ import java.util.Arrays;
  */
 public class CacheKeyPrefix {
 
-    private final Charset charset;
-
     private final String keyPrefix;
 
     private final byte[] keyPrefixBytes;
 
     private final StringSerializer serializer;
 
-    public CacheKeyPrefix(String name, Charset charset, StringSerializer serializer) {
-        this.charset = charset;
-        this.keyPrefix = name + "::";
+    public CacheKeyPrefix(String name, StringSerializer serializer) {
+        this.keyPrefix = name + ":";
         this.serializer = serializer;
         this.keyPrefixBytes = serializer.serialize(keyPrefix);
     }
@@ -42,11 +38,11 @@ public class CacheKeyPrefix {
     }
 
     public byte[] concatPrefixBytes(String key) {
-        return ArrayUtils.concat(keyPrefixBytes, key.getBytes(charset));
+        return ArrayUtils.concat(keyPrefixBytes, serializer.serialize(key));
     }
 
     public String removePrefix(String keyWithPrefix) {
-        byte[] keyWithPrefixBytes = keyWithPrefix.getBytes(charset);
+        byte[] keyWithPrefixBytes = serializer.serialize(keyWithPrefix);
         return removePrefix(keyWithPrefixBytes);
     }
 

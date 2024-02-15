@@ -1,12 +1,14 @@
 package com.igeeksky.xcache.config;
 
+import com.igeeksky.xcache.extension.contains.TrueContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.extension.lock.CacheLock;
+import com.igeeksky.xcache.extension.lock.LocalCacheLock;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,29 +20,25 @@ import java.util.Map;
  */
 public class CacheConfig<K, V> {
 
-    // both
     private String name;
 
-    // both
-    private Charset charset = StandardCharsets.UTF_8;
+    private String application;
 
-    // both
+    private Charset charset;
+
     private Class<K> keyType;
 
-    // both
     private Class<V> valueType;
 
-    // both
-    private CacheLock<K> cacheLock;
+    private CacheLock cacheLock;
 
-    // both
     private KeyConvertor keyConvertor;
 
-    // both
+    private CacheLoader<K, V> cacheLoader;
+
     private ContainsPredicate<K> containsPredicate;
 
-    // both
-    private List<CacheMonitor<V>> monitors = new ArrayList<>();
+    private final List<CacheMonitor<V>> monitors = new ArrayList<>();
 
     private LocalConfig<K, V> localConfig = new LocalConfig<>();
 
@@ -71,6 +69,14 @@ public class CacheConfig<K, V> {
         this.charset = charset;
     }
 
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
+    }
+
     public Class<K> getKeyType() {
         return keyType;
     }
@@ -87,11 +93,14 @@ public class CacheConfig<K, V> {
         this.valueType = valueType;
     }
 
-    public CacheLock<K> getCacheLock() {
-        return cacheLock;
+    public CacheLock getCacheLock() {
+        if (cacheLock != null) {
+            return cacheLock;
+        }
+        return new LocalCacheLock<>();
     }
 
-    public void setCacheLock(CacheLock<K> cacheLock) {
+    public void setCacheLock(CacheLock cacheLock) {
         this.cacheLock = cacheLock;
     }
 
@@ -103,8 +112,19 @@ public class CacheConfig<K, V> {
         this.keyConvertor = keyConvertor;
     }
 
+    public CacheLoader<K, V> getCacheLoader() {
+        return cacheLoader;
+    }
+
+    public void setCacheLoader(CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
+    }
+
     public ContainsPredicate<K> getContainsPredicate() {
-        return containsPredicate;
+        if (containsPredicate != null) {
+            return containsPredicate;
+        }
+        return TrueContainsPredicate.getInstance();
     }
 
     public void setContainsPredicate(ContainsPredicate<K> containsPredicate) {
@@ -115,8 +135,16 @@ public class CacheConfig<K, V> {
         return monitors;
     }
 
-    public void setMonitors(List<CacheMonitor<V>> monitors) {
-        this.monitors = monitors;
+    public void addMonitor(CacheMonitor<V> monitor) {
+        if (monitor != null) {
+            this.monitors.add(monitor);
+        }
+    }
+
+    public void addMonitors(List<CacheMonitor<V>> monitors) {
+        if (monitors != null) {
+            this.monitors.addAll(monitors);
+        }
     }
 
     public LocalConfig<K, V> getLocalConfig() {

@@ -2,9 +2,10 @@ package com.igeeksky.xcache;
 
 import com.igeeksky.xcache.common.*;
 import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.extension.Compressor;
+import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.extension.lock.CacheLock;
 import com.igeeksky.xcache.extension.serializer.Serializer;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -39,7 +40,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     private final Compressor remoteValueCompressor;
     private final Serializer<V> localValueSerializer;
     private final Serializer<V> remoteValueSerializer;
-    private final CacheLock<K> cacheLock;
+    private final CacheLock cacheLock;
     private final ContainsPredicate<K> containsPredicate;
 
     public AbstractCache(CacheConfig<K, V> config) {
@@ -87,22 +88,28 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     @Override
     public Mono<CacheValue<V>> get(K key, CacheLoader<K, V> cacheLoader) {
-        return this.get(key).switchIfEmpty(loadWithLock(key, cacheLoader));
+        if (null == key) {
+            return Mono.error(new CacheKeyNullException());
+        }
+        String storeKey = toStoreKey(key);
+        return Mono.just(storeKey)
+                .flatMap(this::doGet)
+                .switchIfEmpty(load(key, storeKey, cacheLoader));
     }
 
-    private Mono<CacheValue<V>> loadWithLock(K key, CacheLoader<K, V> cacheLoader) {
+    private Mono<CacheValue<V>> load(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
         if (containsPredicate.test(getName(), key)) {
-            Lock keyLock = cacheLock.get(key);
-            return Mono.just(key)
-                    .doOnNext(k -> keyLock.lock())
-                    .flatMap(this::get)
-                    .switchIfEmpty(this.doGet(key, toStoreKey(key), cacheLoader))
-                    .doFinally(s -> keyLock.unlock());
+            Lock keyLock = cacheLock.get(storeKey);
+            return Mono.just(storeKey)
+                    .doOnSuccess(k -> keyLock.lock())
+                    .doFinally(s -> keyLock.unlock())
+                    .flatMap(this::doGet)
+                    .switchIfEmpty(this.doLoad(key, storeKey, cacheLoader));
         }
         return Mono.empty();
     }
 
-    protected abstract Mono<CacheValue<V>> doGet(K key, String storeKey, CacheLoader<K, V> cacheLoader);
+    protected abstract Mono<CacheValue<V>> doLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader);
 
     @Override
     public Flux<KeyValue<K, CacheValue<V>>> getAll(Set<? extends K> keys) {
@@ -219,7 +226,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         }
         return asyncCache;
     }
-
 
     protected String toStoreKey(K key) {
         return keyConvertor.apply(key);
