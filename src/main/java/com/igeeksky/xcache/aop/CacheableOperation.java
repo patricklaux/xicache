@@ -55,34 +55,22 @@ public class CacheableOperation extends CacheOperation {
         private String unless;
 
         public Builder key(String key) {
-            String trim = StringUtils.trim(key);
-            if (StringUtils.hasLength(trim)) {
-                this.key = trim;
-            }
+            this.key = StringUtils.trim(key);
             return this;
         }
 
         public Builder value(String value) {
-            String trim = StringUtils.trim(value);
-            if (StringUtils.hasLength(trim)) {
-                this.value = trim;
-            }
+            this.value = StringUtils.trim(value);
             return this;
         }
 
         public Builder condition(String condition) {
-            String trim = StringUtils.trim(condition);
-            if (StringUtils.hasLength(trim)) {
-                this.condition = trim;
-            }
+            this.condition = StringUtils.trim(condition);
             return this;
         }
 
         public Builder unless(String unless) {
-            String trim = StringUtils.trim(unless);
-            if (StringUtils.hasLength(trim)) {
-                this.unless = trim;
-            }
+            this.unless = StringUtils.trim(unless);
             return this;
         }
 

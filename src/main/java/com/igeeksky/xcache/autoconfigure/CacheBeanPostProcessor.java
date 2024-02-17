@@ -9,16 +9,17 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.util.ReflectionUtils;
 
 /**
+ * 检测 CacheAutowired 注解，注入 CacheBean
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-09
  */
-
-public class CacheBeanPostProfessor implements BeanPostProcessor {
+public class CacheBeanPostProcessor implements BeanPostProcessor {
 
     private final CacheManager cacheManager;
 
     @Lazy
-    public CacheBeanPostProfessor(CacheManager cacheManager) {
+    public CacheBeanPostProcessor(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 

@@ -4,6 +4,7 @@ import com.igeeksky.xcache.annotation.EnableCache;
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.AdviceModeImportSelector;
 import org.springframework.context.annotation.AutoProxyRegistrar;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -17,14 +18,13 @@ public class CacheConfigSelector extends AdviceModeImportSelector<EnableCache> {
 
     @Nullable
     @Override
-    protected String[] selectImports(AdviceMode adviceMode) {
-        switch (adviceMode) {
-            case PROXY:
-                return getProxy();
-            case ASPECTJ:
-            default:
-                return null;
+    protected String[] selectImports(@NonNull AdviceMode adviceMode) {
+        if (AdviceMode.PROXY == adviceMode) {
+            return getProxy();
+        } else if (AdviceMode.ASPECTJ == adviceMode) {
+            return null;
         }
+        return null;
     }
 
     private String[] getProxy() {

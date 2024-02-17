@@ -25,6 +25,11 @@ public class CacheMethodPointcut extends StaticMethodMatcherPointcut {
         return (source != null && CollectionUtils.isNotEmpty(source.getCacheOperations(method, targetClass)));
     }
 
+    /**
+     * 判断目标类是否属于指定的包：如果是，则可能是缓存代理对象；如果否，则非缓存代理对象<p/>
+     * 即只有 @EnableCache 注解指定的包内的缓存方法注解才生效。
+     *
+     */
     private static class CacheOperationSourceClassFilter implements ClassFilter {
 
         private final String[] basePackages;

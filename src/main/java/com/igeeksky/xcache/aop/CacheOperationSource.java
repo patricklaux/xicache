@@ -31,6 +31,12 @@ public class CacheOperationSource {
 
     private final Map<MethodClassKey, Collection<CacheOperation>> attributeCache = new ConcurrentHashMap<>(1024);
 
+    /**
+     *
+     * @param method 方法
+     * @param targetClass 类
+     * @return 操作
+     */
     public Collection<CacheOperation> getCacheOperations(Method method, @Nullable Class<?> targetClass) {
         if (method.getDeclaringClass() == Object.class) {
             return null;

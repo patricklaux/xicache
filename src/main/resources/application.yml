@@ -79,7 +79,6 @@ xcache:
             timeout:  # the command timeout for synchronous command execution.
             client-options:
               auto-reconnect: true
-              cancelCommandsOnReconnectFailure: false
               decodeBufferPolicy: # 需要编程实现
               disconnectedBehavior: DEFAULT # 当断开连接时：DEFAULT 自动重连为true，缓存命令；自动重连为false，拒绝命令；ACCEPT_COMMANDS 缓存命令；REJECT_COMMANDS
               publishOnScheduler: false # 是否使用专用的 reactor.core.scheduler.scheduler发送反应数据信号
@@ -126,7 +125,6 @@ xcache:
             timeout:  # the command timeout for synchronous command execution.
             client-options:
               autoReconnect: true
-              cancelCommandsOnReconnectFailure: false
               # ……
           cluster:
             nodes: 127.0.0.1:6378, 127.0.0.1:6379, 127.0.0.1:6380
@@ -141,7 +139,6 @@ xcache:
             timeout:  # the command timeout for synchronous command execution.
             client-options:
               autoReconnect: true
-              cancelCommandsOnReconnectFailure: false
               # ……
               max-redirects:
               validateClusterNodeMembership:
