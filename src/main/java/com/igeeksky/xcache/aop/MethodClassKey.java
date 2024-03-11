@@ -29,8 +29,7 @@ public class MethodClassKey {
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (!(object instanceof MethodClassKey)) return false;
-        MethodClassKey that = (MethodClassKey) object;
+        if (!(object instanceof MethodClassKey that)) return false;
         return Objects.equals(getMethod(), that.getMethod()) && Objects.equals(getTargetClass(), that.getTargetClass());
     }
 

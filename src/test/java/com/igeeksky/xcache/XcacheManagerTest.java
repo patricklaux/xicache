@@ -102,6 +102,11 @@ class XcacheManagerTest {
     }
 
     @Test
+    void testPut() throws InterruptedException {
+        cache.put("001", Mono.empty()).subscribe();
+    }
+
+    @Test
     void getOrCreateCache() {
     }
 

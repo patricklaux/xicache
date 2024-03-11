@@ -6,7 +6,6 @@ public class User {
 
     private String id;
     private String name;
-
     private int age;
 
     public User() {
@@ -49,9 +48,7 @@ public class User {
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (!(object instanceof User)) return false;
-
-        User user = (User) object;
+        if (!(object instanceof User user)) return false;
 
         if (getAge() != user.getAge()) return false;
         if (getId() != null ? !getId().equals(user.getId()) : user.getId() != null) return false;

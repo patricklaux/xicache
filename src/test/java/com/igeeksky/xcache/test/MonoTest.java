@@ -82,7 +82,20 @@ public class MonoTest {
 
     @Test
     void testDoOnNext4() {
-        emptyReturn2().doOnSuccess(user -> System.out.println("执行2" + user)).subscribe();
+        Mono<User> mono = emptyReturn2();
+        mono.switchIfEmpty(
+                        Mono.just(new User("ss"))
+                )
+                .doOnSuccess(user -> System.out.println("执行2" + user))
+                .subscribe();
+    }
+
+    @Test
+    void testEmptyReturn2() {
+        Mono<User> mono = emptyReturn2();
+        mono.map(u -> new User("d"))
+                .doOnSuccess(user -> System.out.println("执行2" + user))
+                .subscribe();
     }
 
     static Mono<User> emptyReturn2() {

@@ -2,10 +2,13 @@ package com.igeeksky.xcache.aop;
 
 
 import com.igeeksky.xcache.annotation.*;
+import com.igeeksky.xtool.core.collection.CollectionUtils;
+import org.springframework.lang.NonNull;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Patrick.Lau
@@ -13,24 +16,34 @@ import java.util.*;
  */
 public class CacheAnnotationParser {
 
-    private static final Set<Class<? extends Annotation>> CACHE_OPERATION_ANNOTATIONS = new LinkedHashSet<>(8);
+    public static Collection<CacheOperation> parseCacheAnnotations(Method method) {
+        List<CacheOperation> result = new ArrayList<>();
+        Cacheable cacheable = method.getAnnotation(Cacheable.class);
+        if (cacheable != null) {
+            CacheableOperation.Builder builder = CacheableOperation.builder();
+            process(builder, cacheable);
 
-    static {
-        CACHE_OPERATION_ANNOTATIONS.add(Cacheable.class);
-        CACHE_OPERATION_ANNOTATIONS.add(CacheableAll.class);
-        CACHE_OPERATION_ANNOTATIONS.add(CacheEvict.class);
-        CACHE_OPERATION_ANNOTATIONS.add(CacheEvictAll.class);
-        CACHE_OPERATION_ANNOTATIONS.add(CachePut.class);
-        CACHE_OPERATION_ANNOTATIONS.add(CachePutAll.class);
+            builder.key(cacheable.key());
+            builder.value(cacheable.value());
+            builder.condition(cacheable.condition());
+            builder.unless(cacheable.unless());
+            result.add(builder.build());
+        }
+
+        // TODO 解析其它注解
+        CacheableAll cacheableAll = method.getAnnotation(CacheableAll.class);
+        if (cacheableAll != null) {
+            CacheableAllOperation.Builder builder = CacheableAllOperation.builder();
+        }
+
+        return CollectionUtils.isEmpty(result) ? null : result;
     }
 
-    public Collection<CacheOperation> parseCacheAnnotations(Method method) {
-        List<CacheOperation> result = new ArrayList<>();
-        for (Class<? extends Annotation> clazz : CACHE_OPERATION_ANNOTATIONS) {
-            Annotation annotation = method.getAnnotation(clazz);
-
-        }
-        return null;
+    private static void process(CacheOperation.Builder builder, Cacheable cacheable) {
+        builder.name(cacheable.name());
+        builder.keyType(cacheable.keyType());
+        builder.valueType(cacheable.valueType());
+        builder.valueParams(cacheable.valueParams());
     }
 
 }

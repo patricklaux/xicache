@@ -69,7 +69,6 @@ public class TestLettuce {
         ClientOptions clientOptions = ClientOptions.builder()
                 .pingBeforeActivateConnection(false)
                 .autoReconnect(false)
-                .cancelCommandsOnReconnectFailure(false)
                 //.decodeBufferPolicy()
                 .suspendReconnectOnProtocolFailure(false)
                 .requestQueueSize(Integer.MAX_VALUE)
@@ -114,7 +113,6 @@ public class TestLettuce {
         ClientOptions clientOptions = ClientOptions.builder()
                 .pingBeforeActivateConnection(false)
                 .autoReconnect(false)
-                .cancelCommandsOnReconnectFailure(false)
                 //.decodeBufferPolicy()
                 .suspendReconnectOnProtocolFailure(false)
                 .requestQueueSize(Integer.MAX_VALUE)
@@ -168,7 +166,6 @@ public class TestLettuce {
                 .validateClusterNodeMembership(true)            // cluster
                 .pingBeforeActivateConnection(false)
                 .autoReconnect(true)
-                .cancelCommandsOnReconnectFailure(false)
                 //.decodeBufferPolicy()
                 .suspendReconnectOnProtocolFailure(false)
                 .requestQueueSize(Integer.MAX_VALUE)
@@ -202,7 +199,6 @@ public class TestLettuce {
         //         .tracing()
         //         .build();
     }
-
 
 
 }

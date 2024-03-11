@@ -2,6 +2,8 @@ package com.igeeksky.xcache;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.interceptor.CacheInterceptor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
@@ -39,7 +41,7 @@ public class TestService {
         Hooks.resetOnOperatorDebug();
     }
 
-    @CachePut
+    @Cacheable
     public Mono<String> getUserById(String id) {
 
         return Mono.empty();

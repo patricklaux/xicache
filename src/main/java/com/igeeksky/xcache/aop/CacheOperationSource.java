@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.aop;
 
 
+import com.igeeksky.xcache.annotation.CacheOperation;
+import com.igeeksky.xtool.core.collection.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
@@ -14,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 根据方法得到缓存注解，并且
+ * 获取方法上的缓存注解及对应操作
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-13
@@ -25,15 +27,14 @@ public class CacheOperationSource {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheOperationSource.class);
 
-    private static final CacheAnnotationParser annotationParser = new CacheAnnotationParser();
-
     private static final Collection<CacheOperation> NULL_CACHING_ATTRIBUTE = Collections.emptyList();
 
     private final Map<MethodClassKey, Collection<CacheOperation>> attributeCache = new ConcurrentHashMap<>(1024);
 
     /**
+     * 获取方法上的缓存注解及对应操作
      *
-     * @param method 方法
+     * @param method      方法
      * @param targetClass 类
      * @return 操作
      */
@@ -42,8 +43,8 @@ public class CacheOperationSource {
             return null;
         }
 
-        MethodClassKey cacheKey = new MethodClassKey(method, targetClass);
-        Collection<CacheOperation> cached = this.attributeCache.get(cacheKey);
+        MethodClassKey methodKey = new MethodClassKey(method, targetClass);
+        Collection<CacheOperation> cached = this.attributeCache.get(methodKey);
 
         if (cached != null) {
             return (cached != NULL_CACHING_ATTRIBUTE ? cached : null);
@@ -54,15 +55,16 @@ public class CacheOperationSource {
             if (logger.isTraceEnabled()) {
                 logger.trace("Adding cacheable method '" + method.getName() + "' with attribute: " + cacheOps);
             }
-            this.attributeCache.put(cacheKey, cacheOps);
+            this.attributeCache.put(methodKey, cacheOps);
         } else {
-            this.attributeCache.put(cacheKey, NULL_CACHING_ATTRIBUTE);
+            this.attributeCache.put(methodKey, NULL_CACHING_ATTRIBUTE);
         }
 
         return cacheOps;
     }
 
     private Collection<CacheOperation> computeCacheOperations(Method method, Class<?> targetClass) {
+        // 如果是非公开方法，不处理缓存注解
         if (!Modifier.isPublic(method.getModifiers())) {
             return null;
         }
@@ -76,9 +78,9 @@ public class CacheOperationSource {
          * 如果实现方法和接口方法都有注解，以实现方法中的注解为准。
          */
         // 1.先从 specificMethod 获取注解
-        Collection<CacheOperation> opDef = findCacheOperations(specificMethod);
-        if (opDef != null) {
-            return opDef;
+        Collection<CacheOperation> opDef = getCacheOperations(specificMethod);
+        if (CollectionUtils.isEmpty(opDef)) {
+            return null;
         }
 
         // 2.如果注解不存在，判断 specificMethod 与 method 是否相同：
@@ -88,11 +90,11 @@ public class CacheOperationSource {
         }
 
         // 2.1 如果不相同，从 method 获取注解。
-        return findCacheOperations(method);
+        return getCacheOperations(method);
     }
 
-    private Collection<CacheOperation> findCacheOperations(Method method) {
-        return annotationParser.parseCacheAnnotations(method);
+    private Collection<CacheOperation> getCacheOperations(Method method) {
+        return CacheAnnotationParser.parseCacheAnnotations(method);
     }
 
 }
