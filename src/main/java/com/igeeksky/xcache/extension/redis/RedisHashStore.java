@@ -116,10 +116,11 @@ public class RedisHashStore<K, V> implements RemoteStore {
     @Override
     public Mono<Void> put(String key, Mono<byte[]> value) {
         return value.flatMap(v -> {
+                    var field = toStoreKey(key);
                     if (connection.isCluster()) {
-                        return connection.hset(selectHashKey(v), toStoreKey(key), v);
+                        return connection.hset(selectHashKey(field), field, v);
                     }
-                    return connection.hset(name, toStoreKey(key), v);
+                    return connection.hset(name, field, v);
                 })
                 .then();
     }

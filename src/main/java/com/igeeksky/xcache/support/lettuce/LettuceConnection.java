@@ -45,7 +45,7 @@ public class LettuceConnection extends AbstractLettuceConnection {
                         .doOnNext(result -> isSetSuccess(kv.getKey(), kv.getValue(), result))
                 )
                 .then()
-                .doOnSuccess(vod -> bashReactiveCommands.flushCommands());
+                .doOnSuccess(vod -> bashRedisConnection.flushCommands());
     }
 
     @Override
